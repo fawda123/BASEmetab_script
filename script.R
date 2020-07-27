@@ -1,4 +1,3 @@
-
 # setup -------------------------------------------------------------------
 
 library(R2jags)
@@ -33,9 +32,8 @@ theta.est <- FALSE
 # input dataset
 data <- read.csv('Yallakool_example.csv', stringsAsFactors = F)
   
-# Set up output tables
+# Set up output object
 outputnms <- c("Date", "GPP.mean", "ER.mean", "NEP.mean")
-
 output <- NULL
 
 # Select dates
@@ -46,7 +44,8 @@ dates <- unique(data$Date)
 n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
-## Analyse days sequentially
+# iterate through each date to estimate metabolism ------------------------
+
 for(d in dates){ 
   
   cat('Date', which(d == dates), 'of', length(dates), '\n')
@@ -101,5 +100,3 @@ for(d in dates){
   output <- rbind(output, result) 
   
 }
-  
-

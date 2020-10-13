@@ -1,6 +1,8 @@
 # setup -------------------------------------------------------------------
 
 library(R2jags)
+library(foreach)
+library(doParallel)
 
 # number of seconds between observations
 interval <- 600
@@ -30,7 +32,7 @@ p.est <- FALSE
 theta.est <- FALSE 
 
 # input dataset
-data <- read.csv('Yallakool_example.csv', stringsAsFactors = F)
+data <- read.csv('data/Yallakool_example.csv', stringsAsFactors = F)
   
 # Set up output object
 outputnms <- c("Date", "GPP.mean", "ER.mean", "NEP.mean")
@@ -46,9 +48,22 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
 
-for(d in dates){ 
+# setup parallel backend
+ncores <- detectCores()
+cl <- makeCluster(ncores - 1)
+registerDoParallel(cl)
+
+# setup log file
+strt <- Sys.time()
+
+# process
+output <- foreach(d = dates, .packages = 'R2jags') %dopar% { 
   
-  cat('Date', which(d == dates), 'of', length(dates), '\n')
+  sink('log.txt')
+  cat('Log entry time', as.character(Sys.time()), '\n')
+  cat(d, ' of ', length(dates), '\n')
+  print(Sys.time() - strt)
+  sink()
   
   data.sub <- data[data$Date == d,]
   
@@ -97,6 +112,8 @@ for(d in dates){
                        NEP = metabfit$BUGSoutput$mean$NEP,
                        K = metabfit$BUGSoutput$mean$K.day)
 
-  output <- rbind(output, result) 
+  return(result)
   
 }
+
+output <- do.call('rbind',output)

@@ -6,23 +6,23 @@
               # PRIORS
 
               # Set prior of K based on user choices:
-              # K.mu <- ifelse(K.est.n == 1, 0.0 , K.meas.mean.ts)
-              # K.sd <- ifelse(K.est.n == 1, 0.25, 1/(K.meas.sd.ts*K.meas.sd.ts) )
-              #K ~ dnorm(K.mu,K.sd)T(0,40/(seconds/interval)) 	# estimated
+              K.mu <- ifelse(K.est.n == 1, 0.0 , K.meas.mean.ts)
+              K.sd <- ifelse(K.est.n == 1, 0.25, 1/(K.meas.sd.ts*K.meas.sd.ts) )
+              K ~ dnorm(K.mu,K.sd)T(0,40/(seconds/interval)) 	# estimated
 
-  # calculate u10^2
-  windmag2 <- WSpd^2
-
-  # Schmidt number for oxygen
-  sc <- oxySchmidt(Temp, Sal)
-
-  a <- 0.251 #DO NOT CHANGE ~ Wannikof 2014
-
-  kw <- a * windmag2 * ((sc / 660) ^ (-0.5)) # cm/hr
-  kw  <- kw / (100 * 60 * 60) # convert from cm/hr to m/s
-  kw <- kw * 60 * 60 * 24 # convert to m/d, 60 * 60 * 24 seconds per day
-
-  return(kw)
+  # # calculate u10^2
+  # windmag2 <- WSpd^2
+  # 
+  # # Schmidt number for oxygen
+  # sc <- oxySchmidt(Temp, Sal)
+  # 
+  # a <- 0.251 #DO NOT CHANGE ~ Wannikof 2014
+  # 
+  # kw <- a * windmag2 * ((sc / 660) ^ (-0.5)) # cm/hr
+  # kw  <- kw / (100 * 60 * 60) # convert from cm/hr to m/s
+  # kw <- kw * 60 * 60 * 24 # convert to m/d, 60 * 60 * 24 seconds per day
+  # 
+  # return(kw)
   
   
   

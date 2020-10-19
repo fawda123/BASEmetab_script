@@ -10,23 +10,6 @@
               K.sd <- ifelse(K.est.n == 1, 0.25, 1/(K.meas.sd.ts*K.meas.sd.ts) )
               K ~ dnorm(K.mu,K.sd)T(0,40/(seconds/interval)) 	# estimated
 
-  # # calculate u10^2
-  # windmag2 <- WSpd^2
-  # 
-  # # Schmidt number for oxygen
-  # sc <- oxySchmidt(Temp, Sal)
-  # 
-  # a <- 0.251 #DO NOT CHANGE ~ Wannikof 2014
-  # 
-  # kw <- a * windmag2 * ((sc / 660) ^ (-0.5)) # cm/hr
-  # kw  <- kw / (100 * 60 * 60) # convert from cm/hr to m/s
-  # kw <- kw * 60 * 60 * 24 # convert to m/d, 60 * 60 * 24 seconds per day
-  # 
-  # return(kw)
-  
-  
-  
-  
               # Set priors of theta and p parameters based on user choice:
               p.mu  <- ifelse(p.est.n == 1, 0.0, 1)
               p.low <- ifelse(p.est.n == 1, 0.3, 1)
@@ -73,10 +56,6 @@
               
               temp.ave <- mean(tempC[])
               
-              #Aprime <- A # no cut in jags
-              #pprime <- p # no cut in jags
-              #gppts[num.measurements] <- 0 #updated
-              
               # for posterior predictive assessment and goodness of fit evaluation
               obs.resid[num.measurements] <- 0
               ppa.resid[num.measurements] <- 0
@@ -88,14 +67,12 @@
               
               for (i in 1:(num.measurements-1))
               {		
-                # estimating primary production
-                # gppts[i] <- Aprime*pow(PAR[i],pprime) 
                
 		DO.meas[i+1] ~ dnorm(DO.modelled[i+1], tau)
                 DO.modelled[i+1] <- DO.modelled[i] 
                 + A * pow(PAR[i],p)                                       			  
                 - R * (pow(theta,(tempC[i]-temp.ave)))
-                + K * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
+                + Kwann[i] * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
                 
                 # posterior predictive assessment nodes #
                 
@@ -117,16 +94,16 @@
               ER <- R * (seconds/interval)
               GPP <- sum(gppts[])
               NEP <- GPP - ER
-	      PR <- GPP / ER
+	            PR <- GPP / ER
               K.day <- K * (seconds/interval)
+              Kwann.day <- mean(Kwann) * (seconds/interval)
               
-	      for (i in 1:num.measurements)
-              {
-		kpts[i] <- K * pow(1.0241,(tempC[i]-temp.ave))	 
-		gppts[i] <- A * pow(PAR[i],p) 
-		erpts[i] <- R * (pow(theta,(tempC[i]-temp.ave)))
+	      for (i in 1:num.measurements){
+		      kpts[i] <- Kwann[i] * pow(1.0241,(tempC[i]-temp.ave))	 
+		      gppts[i] <- A * pow(PAR[i],p) 
+		      erpts[i] <- R * (pow(theta,(tempC[i]-temp.ave)))
 	      }
 
-          }
+    }
           
 

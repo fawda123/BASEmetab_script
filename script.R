@@ -3,9 +3,10 @@
 library(R2jags)
 library(foreach)
 library(doParallel)
+library(WtRegDO)
 
 # number of seconds between observations
-interval <- 600
+interval <- 900
 
 # number of MCMC iterations 
 n.iter <- 20000
@@ -32,11 +33,9 @@ p.est <- FALSE
 theta.est <- FALSE 
 
 # input dataset
-data <- read.csv('data/Yallakool_example.csv', stringsAsFactors = F)
-  
-# Set up output object
-outputnms <- c("Date", "GPP.mean", "ER.mean", "NEP.mean")
-output <- NULL
+load(file = 'data/APNERR2012.RData')
+assign('data', APNERR2012)
+# data <- data[13441:13728, ]
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))
@@ -45,6 +44,9 @@ dates <- unique(data$Date)
 # evaluate dates with complete record
 n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
+
+# get K for Wanninkhof equation
+data$Kwann <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
 
 # iterate through each date to estimate metabolism ------------------------
 
@@ -74,6 +76,7 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   atmo.pressure <- data.sub$atmo.pressure
   DO.meas <- data.sub$DO.meas
   PAR <- data.sub$I
+  Kwann <- data.sub$Kwann
   
   # Initial values
   inits <- function()	{	list(K = K.init / (86400/interval) ) }
@@ -90,11 +93,13 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   K.est.n <- as.numeric(K.est)
   K.meas.mean.ts <- K.meas.mean / (86400/interval)
   K.meas.sd.ts <- K.meas.sd / (86400/interval)
-  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","salinity","atmo.pressure", "K.init", 
+  
+  
+  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","salinity","atmo.pressure", "Kwann", "K.init", 
                     "K.est.n", "K.meas.mean.ts", "K.meas.sd.ts", "p.est.n", "theta.est.n")  
   
   # Define monitoring variables
-  params <- c("A","R","K","K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
+  params <- c("A","R","Kwann", "K", "Kwann.day", "K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
            "gppts", "erpts", "kpts")
   
   ## Call jags ##
@@ -110,7 +115,9 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
                        GPP = metabfit$BUGSoutput$mean$GPP, 
                        ER = metabfit$BUGSoutput$mean$ER, 
                        NEP = metabfit$BUGSoutput$mean$NEP,
-                       K = metabfit$BUGSoutput$mean$K.day)
+                       K = metabfit$BUGSoutput$mean$K.day,
+                       Kwann = metabfit$BUGSoutput$mean$Kwann.day
+                       )
 
   return(result)
   

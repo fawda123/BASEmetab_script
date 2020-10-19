@@ -35,7 +35,8 @@ theta.est <- FALSE
 # input dataset
 load(file = 'data/APNERR2012.RData')
 assign('data', APNERR2012)
-# data <- data[13441:13728, ]
+data <- na.omit(data)
+data <- data[1:5000, ]
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))
@@ -59,11 +60,11 @@ registerDoParallel(cl)
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = 'R2jags') %dopar% { 
+output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   
   sink('log.txt')
   cat('Log entry time', as.character(Sys.time()), '\n')
-  cat(d, ' of ', length(dates), '\n')
+  cat(which(d == dates), ' of ', length(dates), '\n')
   print(Sys.time() - strt)
   sink()
   
@@ -123,4 +124,4 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   
 }
 
-output <- do.call('rbind',output)
+outputpar <- do.call('rbind', output)

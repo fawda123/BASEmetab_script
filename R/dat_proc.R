@@ -8,7 +8,8 @@ library(lubridate)
 # DO is mg/l, should be mg/l
 # temp is C, should be C
 # BP is mb, should be atm
-# WSpd
+# WSpd is m/s, should be m/s
+# last line is to fill NA (only 3 values) with last value
 APNERR2012 <- read.csv('data/APNERR2012.csv') %>% 
   mutate(
     DateTimeStamp = as.character(DateTimeStamp), 
@@ -17,6 +18,7 @@ APNERR2012 <- read.csv('data/APNERR2012.csv') %>%
     BP = BP / 1013 # mb to atm
   ) %>% 
   separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(Date, Time, I = totpar, tempC = ATemp, DO.meas = DO_obs, atmo.pressure = BP, salinity = Sal, WSpd)
+  select(Date, Time, I = totpar, tempC = ATemp, DO.meas = DO_obs, atmo.pressure = BP, salinity = Sal, WSpd) %>% 
+  fill(atmo.pressure, tempC)
 
 save(APNERR2012, file = 'data/APNERR2012.RData', compress = 'xz')

@@ -33,8 +33,8 @@ p.est <- FALSE
 theta.est <- FALSE 
 
 # input dataset
-load(file = 'data/APNERR2012.RData')
-assign('data', APNERR2012)
+load(file = 'data/APNERR2012dtd.RData')
+assign('data', APNERR2012dtd)
 # data <- data[1:25000, ]
 
 # Select dates

@@ -72,7 +72,7 @@
                 DO.modelled[i+1] <- DO.modelled[i] 
                 + A * pow(PAR[i],p)                                       			  
                 - R * (pow(theta,(tempC[i]-temp.ave)))
-                + Kwann[i] * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
+                + mean(Kwann[]) * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
                 
                 # posterior predictive assessment nodes #
                 
@@ -99,7 +99,7 @@
               Kwann.day <- mean(Kwann) * (seconds/interval)
               
 	      for (i in 1:num.measurements){
-		      kpts[i] <- Kwann[i] * pow(1.0241,(tempC[i]-temp.ave))	 
+		      kpts[i] <- mean(Kwann[]) * pow(1.0241,(tempC[i]-temp.ave))	 
 		      gppts[i] <- A * pow(PAR[i],p) 
 		      erpts[i] <- R * (pow(theta,(tempC[i]-temp.ave)))
 	      }

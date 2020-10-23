@@ -35,7 +35,7 @@ theta.est <- FALSE
 # input dataset
 load(file = 'data/APNERR2012dtd.RData')
 assign('data', APNERR2012dtd)
-# data <- data[1:25000, ]
+# data <- data[10000:20000, ]
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))

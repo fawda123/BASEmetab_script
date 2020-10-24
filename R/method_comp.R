@@ -4,6 +4,8 @@ library(WtRegDO)
 
 # compare Bayes with Odum -------------------------------------------------
 
+# outputpar is from script.R
+
 bsmetab <- outputpar %>% 
   select(
     Pg = GPP, 
@@ -32,12 +34,11 @@ ggplot(toplo, aes(x = Date, y = val, colour = var, fill = var)) +
   geom_line() + 
   geom_point() + 
   theme_minimal() + 
-  facet_wrap(~typ, ncol = 1, scales = 'free') + 
+  facet_wrap(~typ, ncol = 1) + 
   theme(
     strip.background = element_blank()
   ) + 
-  scale_y_continuous(limits= c(-150, 150))
-
+  scale_y_continuous(limits= c(-300, 300))
 
 # compare different gas exchange for Odum ---------------------------------
 

@@ -46,8 +46,11 @@ n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # get K for Wanninkhof equation
+# K needs to be volumetric, f_calcWanninkhof returns it was areal in m/d
+H <- 2.08 # median of tidal vector at Cat Point, plus 0.5m off bottom
 data$Kwann <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
-
+data$Kwann <- data$Kwann / H
+  
 # iterate through each date to estimate metabolism ------------------------
 
 # setup parallel backend

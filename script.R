@@ -18,13 +18,13 @@ n.burnin <- n.iter*0.5
 K.init <- 2 
 
 # should k be estimated with uninformative priors?
-K.est <- TRUE
+K.est <- FALSE
 
 # mean for the informed normal prior distribution if K.est = F
 K.meas.mean <- 0 
 
 # sd for the informed normal prior distribution if K.est = F
-K.meas.sd <- 4 
+K.meas.sd <- 1e-6 
 
 # should p be estimated?
 p.est <- FALSE
@@ -47,7 +47,7 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # get K for Wanninkhof equation
 # K needs to be volumetric, f_calcWanninkhof returns it was areal in m/d
-H <- 2.08 # median of tidal vector at Cat Point, plus 0.5m off bottom
+H <- 2.052841 # median of tidal vector at Cat Point, plus 0.5m off bottom
 data$Kwann <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
 data$Kwann <- data$Kwann / H
   

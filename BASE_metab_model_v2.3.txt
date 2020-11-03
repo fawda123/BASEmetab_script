@@ -96,7 +96,7 @@
               NEP <- GPP - ER
 	            PR <- GPP / ER
               K.day <- K * (seconds/interval)
-              Kwann.day <- mean(Kwann) * (seconds/interval)
+              Kwann.day <- mean(Kwann)
               
 	      for (i in 1:num.measurements){
 		      kpts[i] <- mean(Kwann[]) * pow(1.0241,(tempC[i]-temp.ave))	 

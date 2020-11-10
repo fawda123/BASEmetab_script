@@ -127,3 +127,4 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
 }
 
 outputpar <- do.call('rbind', output)
+save(outputpar, file = 'data/outputpar.RData', compress = 'xz')

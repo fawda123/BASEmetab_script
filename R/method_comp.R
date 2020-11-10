@@ -5,6 +5,7 @@ library(WtRegDO)
 # compare Bayes with Odum -------------------------------------------------
 
 # outputpar is from script.R
+data(outputpar)
 
 bsmetab <- outputpar %>% 
   select(

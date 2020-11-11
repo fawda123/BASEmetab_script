@@ -3,7 +3,6 @@
 library(R2jags)
 library(foreach)
 library(doParallel)
-library(WtRegDO)
 
 # number of seconds between observations
 interval <- 900
@@ -35,7 +34,6 @@ theta.est <- FALSE
 # input dataset
 load(file = 'data/APNERR2012dtd.RData')
 assign('data', APNERR2012dtd)
-# data <- data[10000:20000, ]
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))
@@ -45,24 +43,18 @@ dates <- unique(data$Date)
 n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
-# get K for Wanninkhof equation
-# K needs to be volumetric, f_calcWanninkhof returns it was areal in m/d
-H <- 2.052841 # median of tidal vector at Cat Point, plus 0.5m off bottom
-data$Kwann <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
-data$Kwann <- data$Kwann / H
-  
 # iterate through each date to estimate metabolism ------------------------
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 2)
+cl <- makeCluster(ncores - 1)
 registerDoParallel(cl)
 
 # setup log file
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
+output <- foreach(d = dates, .packages = 'R2jags') %dopar% { 
   
   sink('log.txt')
   cat('Log entry time', as.character(Sys.time()), '\n')
@@ -79,7 +71,6 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   atmo.pressure <- data.sub$atmo.pressure
   DO.meas <- data.sub$DO.meas
   PAR <- data.sub$I
-  Kwann <- data.sub$Kwann
   
   # Initial values
   inits <- function()	{	list(K = K.init / (86400/interval) ) }
@@ -87,7 +78,7 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   # Different random seeds
   kern=as.integer(runif(1000,min=1,max=10000))
   iters=sample(kern,1)
-      
+  
   # Set 
   n.chains <- 3
   n.thin <- 10
@@ -96,14 +87,12 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   K.est.n <- as.numeric(K.est)
   K.meas.mean.ts <- K.meas.mean / (86400/interval)
   K.meas.sd.ts <- K.meas.sd / (86400/interval)
-  
-  
-  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","salinity","atmo.pressure", "Kwann", "K.init", 
+  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","salinity","atmo.pressure", "K.init", 
                     "K.est.n", "K.meas.mean.ts", "K.meas.sd.ts", "p.est.n", "theta.est.n")  
   
   # Define monitoring variables
-  params <- c("A","R","Kwann", "K", "Kwann.day", "K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
-           "gppts", "erpts", "kpts")
+  params <- c("A","R","K","K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
+              "gppts", "erpts", "kpts")
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 
@@ -112,16 +101,14 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
   )
-
+  
   # insert results to table and write table
   result <- data.frame(Date=as.character(d), 
                        GPP = metabfit$BUGSoutput$mean$GPP, 
                        ER = metabfit$BUGSoutput$mean$ER, 
                        NEP = metabfit$BUGSoutput$mean$NEP,
-                       K = metabfit$BUGSoutput$mean$K.day,
-                       Kwann = metabfit$BUGSoutput$mean$Kwann.day
-                       )
-
+                       K = metabfit$BUGSoutput$mean$K.day)
+  
   return(result)
   
 }

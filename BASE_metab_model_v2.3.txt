@@ -78,7 +78,7 @@
                 DO.modelled[i+1] <- DO.modelled[i] 
                 + A * pow(PAR[i],p)                                       			  
                 - R * (pow(theta,(tempC[i]-temp.ave)))
-                # + K * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
+                + K * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
                 
                 # posterior predictive assessment nodes #
                 

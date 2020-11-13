@@ -43,7 +43,7 @@ APNERR2012dtd <- DO_APNERR2012_6_12_0.8 %>%
     BP = BP / 1013 # mb to atm
   ) %>% 
   separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(Date, Time, I = totpar, tempC = ATemp, DO.meas = DO_nrm, atmo.pressure = BP, salinity = Sal, WSpd)
+  select(Date, Time, I = totpar, tempC = Temp, DO.meas = DO_nrm, atmo.pressure = BP, salinity = Sal, WSpd)
 
 save(APNERR2012dtd, file = 'data/APNERR2012dtd.RData', compress = 'xz')
 

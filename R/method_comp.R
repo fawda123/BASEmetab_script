@@ -79,6 +79,8 @@ ggplot(toplo, aes(x = Date, y = val, colour = var, fill = var)) +
 
 # compare original BASEmetb with Odum -------------------------------------
 
+## this comparison was done by setting K as the Wanninkhof average for K mean, K.est = F, and K sd very small
+
 # BASE results
 bsres <- read.csv('results/BASE_results_2020-11-16 101039.csv', stringsAsFactors = F) %>% 
   # filter(R.Rhat < 1.1) %>%
@@ -125,7 +127,6 @@ p1 <- ggplot(toplo1, aes(x = Date, y = val, colour = var)) +
   labs(
     y = expression(paste('mg ', O [2], ' ', L^-1, d^-1))
   )
-p1
 
 toplo2 <- toplo1 %>% 
   pivot_wider(names_from = typ, values_from = val)
@@ -179,4 +180,38 @@ p2 <- p2a + p2b + p2c + plot_layout(ncol = 3)
 p <- p1 + p2 + plot_layout(ncol = 1)
 png('~/Desktop/methodcomp.png', height = 7, width = 8, units = 'in', res = 300)
 print(p)
+dev.off()
+
+## this comparison is for K running wild
+
+# BASE results
+bsres <- read.csv('results/BASE_results_2020-11-15 135525.csv', stringsAsFactors = F) %>% 
+  # filter(R.Rhat < 1.1) %>%
+  # filter(PPP > 0.4) %>%
+  mutate(ER.mean = -1 * ER.mean) %>% 
+  select(Date, Pg = GPP.mean, Rt = ER.mean, NEM = NEP.mean) %>% 
+  mutate(Date = lubridate::ymd(Date)) %>% 
+  gather('var', 'val', -Date) %>% 
+  mutate(typ = 'BASE')
+
+p1 <- ggplot(bsres, aes(x = Date, y = val, colour = var)) + 
+  geom_line(alpha = alph) + 
+  geom_point(alpha = alph) + 
+  theme_minimal() + 
+  scale_x_date(date_labels = '%b', date_breaks = '1 month') +
+  # scale_colour_manual(values = cols) +
+  theme(
+    strip.background = element_blank(), 
+    legend.title = element_blank(), 
+    axis.title.x = element_blank(), 
+    axis.ticks.x = element_line(), 
+    panel.grid.minor.x = element_blank(), 
+    panel.grid.major.x = element_blank()
+  ) + 
+  labs(
+    y = expression(paste('mg ', O [2], ' ', L^-1, d^-1))
+  )
+
+png('~/Desktop/crappy.png', height = 3, width = 8, units = 'in', res = 300)
+print(p1)
 dev.off()

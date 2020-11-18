@@ -82,7 +82,7 @@ ggplot(toplo, aes(x = Date, y = val, colour = var, fill = var)) +
 ## this comparison was done by setting K as the Wanninkhof average for K mean, K.est = F, and K sd very small
 
 # BASE results
-bsres <- read.csv('results/BASE_results_2020-11-16 101039.csv', stringsAsFactors = F) %>% 
+bsres <- read.csv('results/BASE_results_2020-11-18 100149.csv', stringsAsFactors = F) %>% 
   # filter(R.Rhat < 1.1) %>%
   # filter(PPP > 0.4) %>%
   mutate(ER.mean = -1 * ER.mean) %>% 
@@ -93,13 +93,14 @@ bsres <- read.csv('results/BASE_results_2020-11-16 101039.csv', stringsAsFactors
 
 # Odum results
 load(file = 'data/DO_APNERR2012_6_12_0.8.RData')
-tmp <- opmetab <- ecometab(tmp, tz = 'America/Jamaica', depth_val = NULL, depth_vec = 1.852841, lat = 29.75, long = -85, 
-                           gasex = 'Wanninkhof', gasave = 'all')
+tmp <- DO_APNERR2012_6_12_0.8 %>%
+  select(DateTimeStamp, DO_mgl = DO_nrm, Temp, Sal, ATemp, BP, WSpd, totpar, Tide)
 
 # get metab as g/m2/d, convert to mg/L/d (multiply by  to get mg, divide by H to get m3, divide by 1000 to get L)
-opres <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = T, metab_units = 'grams') %>% 
+opres <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', depth_val = NULL, depth_vec = 1.852841, 
+                  gasave = 'all', metab_units = 'grams') %>% 
   gather('var', 'val', -Date) %>% 
-  mutate(val = val / 2.08) %>% 
+  mutate(val = val / 1.852841) %>% 
   mutate(typ = 'Odum')
 
 cols <- list('#F8766D', '#00BA38', '#619CFF') 
@@ -178,7 +179,7 @@ p2c <- ggplot(toplo2[toplo2$var == sel, ], aes(x = BASE, y = Odum, colour = var,
 p2 <- p2a + p2b + p2c + plot_layout(ncol = 3)
 
 p <- p1 + p2 + plot_layout(ncol = 1)
-png('~/Desktop/methodcomp.png', height = 7, width = 8, units = 'in', res = 300)
+png('~/Desktop/methodcomp2.png', height = 7, width = 8, units = 'in', res = 300)
 print(p)
 dev.off()
 

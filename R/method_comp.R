@@ -93,8 +93,8 @@ bsres <- read.csv('results/BASE_results_2020-11-16 101039.csv', stringsAsFactors
 
 # Odum results
 load(file = 'data/DO_APNERR2012_6_12_0.8.RData')
-tmp <- DO_APNERR2012_6_12_0.8 %>%
-  select(DateTimeStamp, DO_mgl = DO_nrm, Temp, Sal, ATemp, BP, WSpd, totpar, Tide)
+tmp <- opmetab <- ecometab(tmp, tz = 'America/Jamaica', depth_val = NULL, depth_vec = 1.852841, lat = 29.75, long = -85, 
+                           gasex = 'Wanninkhof', gasave = 'all')
 
 # get metab as g/m2/d, convert to mg/L/d (multiply by  to get mg, divide by H to get m3, divide by 1000 to get L)
 opres <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = T, metab_units = 'grams') %>% 

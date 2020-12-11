@@ -12,10 +12,8 @@ ncores <- detectCores()
 cl <- makeCluster(ncores - 1)
 registerDoParallel(cl)
 
-results.dir <- '~/Desktop/Output/'
+results.dir <- 'output'
 data.dir <- results.dir
-
-setwd(data.dir)
 
 # file.copy('C:/proj/BASEmetab_script/data/APNERR2012dtd.csv', '.')
 
@@ -34,5 +32,9 @@ Kareal <- 0.7993042
 # volumetric
 kvol <- Kareal / H
 
-results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-6)
+results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-6, instant = T)
+
+# remove image files from output
+file.remove(list.files(path = results.dir, pattern = '\\.jpg$', full.names = T))
+
 

@@ -4,11 +4,13 @@ library(R2jags)
 library(foreach)
 library(doParallel)
 
+source('R/dosat_fun.R')
+
 # number of seconds between observations
-interval <- 900
+interval <- 600
 
 # number of MCMC iterations 
-n.iter <- 20000
+n.iter <- 2000
 
 # number of MCMC chains to delete
 n.burnin <- n.iter*0.5
@@ -17,13 +19,13 @@ n.burnin <- n.iter*0.5
 K.init <- 2 
 
 # should k be estimated with uninformative priors?
-K.est <- FALSE
+K.est <- TRUE
 
 # mean for the informed normal prior distribution if K.est = F
 K.meas.mean <- 0 
 
 # sd for the informed normal prior distribution if K.est = F
-K.meas.sd <- 1e-6 
+K.meas.sd <- 4 
 
 # should p be estimated?
 p.est <- FALSE
@@ -32,8 +34,12 @@ p.est <- FALSE
 theta.est <- FALSE 
 
 # input dataset
-load(file = 'data/APNERR2012dtd.RData')
-assign('data', APNERR2012dtd)
+# load(file = 'data/APNERR2012dtd.RData')
+# assign('data', APNERR2012dtd)
+data <- read.csv('data/Yallakool_example.csv')
+
+# add DO saturated
+data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))
@@ -71,6 +77,7 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   atmo.pressure <- data.sub$atmo.pressure
   DO.meas <- data.sub$DO.meas
   PAR <- data.sub$I
+  DO.sat <- data.sub$DO.sat
   
   # Initial values
   inits <- function()	{	list(K = K.init / (86400/interval) ) }
@@ -87,12 +94,12 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   K.est.n <- as.numeric(K.est)
   K.meas.mean.ts <- K.meas.mean / (86400/interval)
   K.meas.sd.ts <- K.meas.sd / (86400/interval)
-  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","salinity","atmo.pressure", "K.init", 
+  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat","K.init", 
                     "K.est.n", "K.meas.mean.ts", "K.meas.sd.ts", "p.est.n", "theta.est.n")  
   
   # Define monitoring variables
   params <- c("A","R","K","K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
-              "gppts", "erpts", "kpts")
+                         "gppts", "erpts", "kpts")
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 

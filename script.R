@@ -7,10 +7,10 @@ library(doParallel)
 source('R/dosat_fun.R')
 
 # number of seconds between observations
-interval <- 600
+interval <- 900
 
 # number of MCMC iterations 
-n.iter <- 2000
+n.iter <- 20000
 
 # number of MCMC chains to delete
 n.burnin <- n.iter*0.5
@@ -19,13 +19,13 @@ n.burnin <- n.iter*0.5
 K.init <- 2 
 
 # should k be estimated with uninformative priors?
-K.est <- TRUE
+K.est <- F
 
 # mean for the informed normal prior distribution if K.est = F
-K.meas.mean <- 0 
+K.meas.mean <-  0.7993042 / 1.852841
 
 # sd for the informed normal prior distribution if K.est = F
-K.meas.sd <- 4 
+K.meas.sd <- 1e-9 
 
 # should p be estimated?
 p.est <- FALSE
@@ -36,7 +36,8 @@ theta.est <- FALSE
 # input dataset
 # load(file = 'data/APNERR2012dtd.RData')
 # assign('data', APNERR2012dtd)
-data <- read.csv('data/Yallakool_example.csv')
+# data <- read.csv('data/Yallakool_example.csv')
+data <- read.csv('output/APNERR2012dtd.csv')
 
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)

@@ -1,0 +1,102 @@
+---
+title: "Comparison of stripped down BASEmetab with original"
+date: Jan. 4th, 2021
+output: 
+  bookdown::word_document2:
+    reference_docx: my_styles.docx
+---
+
+```{r setup, include = F, echo = F, message = F, warning = F}
+knitr::opts_chunk$set(echo = T, message = F, warning = F)
+
+library(here)
+
+load(file = here('data/outputpar.RData'))
+strpdat <- outputpar
+origdat <- read.csv(here('output/BASE_results_2020-12-21 161657.csv'))
+```
+
+This document provides a brief comparison of metabolism results obtained from the extracted BASEmetab code ("stripped down" hereafter) and those from the original [BASEmetab package](https://github.com/dgiling/BASEmetab).  Data and R code for the stripped down version are available [here](https://github.com/fawda123/BASEmetab_script).
+
+## Background 
+
+The original BASEmetab package includes a single function `bayesmetab()` that processes input data files for use with the JAGS model (i.e., [BASE_metab_model_v2.3.txt](https://github.com/dgiling/BASEmetab/blob/master/inst/BASE_metab_model_v2.3.txt)).  This function includes routines for data pre-processing, QA/QC checks for model results, and extraneous output not relevant to our questions.  We attempted to extract the relevant code from the `bayesmetab()` function to simplify the core components used by the JAGS model and to streamline processing for use with multiple datasets.  This simplified version is available as a standalone R script [here](https://github.com/fawda123/BASEmetab_script/blob/master/script.R) and a simplified JAGS model [here](https://github.com/fawda123/BASEmetab_script/blob/master/BASE_metab_model_v2.3.txt).  
+
+Modifications to the standalone R script include: 
+
+* Extraction of relevant arguments from the core `bayesmetab()` function that are only necessary to execute the stripped down code.
+* Simplification of output results for key metabolism components, including gas exchange, GPP, ER, and NEP.
+* Individual days are processed using multiple cores to reduce computation time.
+
+Modifications to the JAGS model include:
+
+* DO saturation is estimated at each time step prior to running the model (previously this was done as a separate loop inside the JAGS model).  DO saturation is estimated using the observed data in the standalone R script with a helper function available [here](https://github.com/fawda123/BASEmetab_script/blob/master/R/dosat_fun.R).
+* An additional loop that calculated instantaneous metabolic estimates was combined with the main loop for estimating dissolved oxygen mass balance.
+
+An option to `update.chains` is also available in the `bayesmetab()` function as part of the JAGS convergence procedure that uses additional Monte Carlo sampling if results are unstable.  This option was not used (i.e., `update.chains = F`) when comparing the stripped down version with BASEmetab because it was not retained in the former.  It should be included in future analyses to ensure the results are robust.  
+
+Finally, the original BASEmetab method estimates gas exchange using prior distributions in a Bayesian framework. Both the stripped down version and the BASEmetab results here do not estimate gas exchange with Bayesian statistics to simplify our anticipated comparison with the Odum open-water method.  Instead, both approaches use an empirically estimated gas exchange value following the Wanninkhof method.  Currently, the same gas exchange estimate is applied to all days. 
+
+## Comparison of results  
+
+A four day [Appalachicola test dataset](https://github.com/fawda123/BASEmetab_script/blob/master/output/APNERR2012dtd.csv) was used to compare results between the stripped down version and the original BASEmetab output.  This sample dataset uses "detided" dissolved oxygen to estimate metabolism. A full comparison of the methods and results can be done by [cloning](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/cloning-a-repository) the [GitHub repository](https://github.com/fawda123/BASEmetab_script) that includes all functions and datasets in a portable directory, then running the metbolism functions on a local computer. Once the repository is available locally, the following steps can reproduce the comparison of results below. 
+
+1) Run the code in [script.R](https://github.com/fawda123/BASEmetab_script/blob/master/script.R) to obtain results from stripped down version
+1) Run the code in [script2.R](https://github.com/fawda123/BASEmetab_script/blob/master/script2.R) to obtain results from the original BASEmetab package
+1) Run the examples below to view the comparison
+
+The results from the stripped down version are available in the repository as a .RData object file called [outputpar](https://github.com/fawda123/BASEmetab_script/blob/master/data/outputpar.RData).  The results from the BASEmetab original method are available as a .csv file called [BASe_results_2020-12-21 161657.csv](https://github.com/fawda123/BASEmetab_script/blob/master/output/BASE_results_2020-12-21%20161657.csv).  For simplicity, they are named `strpdat` and `origdat` for the stripped down and original results in this document.  Note that `origdat` includes many more columns than `strpdat` as part of the original output from BASEmetab.
+
+```{r}
+strpdat
+origdat
+```
+
+The core elements of `origdat` to compare with `strpdat` include `GPP`, `ER`, `NEP`, and `K`.  These are selected and renamed from `origdat` to simplify the output for comparison to `strpdat`.
+
+```{r}
+library(dplyr)
+origdat <- select(origdat, Date, GPP = GPP.mean, ER = ER.mean, NEP = NEP.mean, K = K.mean)
+origdat
+```
+
+The two data objects can also be plotted to verify identical results, but first some data wrangling.
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(lubridate)
+
+strpdat <- strpdat %>% 
+  mutate(Date = mdy(Date)) %>% 
+  gather('var', 'stripped', -Date)
+origdat <- origdat %>% 
+  mutate(Date = mdy(Date)) %>% 
+  gather('var', 'original', -Date)
+toplo <- full_join(strpdat, origdat, by = c('Date', 'var'))
+toplo
+```
+
+Now a simple plot to verify the comparison.
+
+```{r, fig.height = 7, fig.width = 7}
+ggplot(toplo, aes(x = original, y = stripped)) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_point(size = 3) + 
+  facet_wrap(~var, ncol = 2) +
+  theme_minimal() + 
+  labs(
+    title = 'Visual comparison of stripped down and original results',
+    subtitle = 'Line is 1:1 for comparison'
+  )
+```
+
+## Next steps
+
+This document is a simple comparison of only four days of data to verify successful extraction of the core components of BASEmetab.  Following this comparison, additional analyses will include:
+
+1) Comparing results for the entire time series of relevant data (i.e., not just four example days)
+1) Including an option for `update.chains` in the stripped down version and comparing with the original BASEmetab results
+1) Using a "metabolic" day to estimate metabolism from sunrise to sunrise the following day
+1) Using instantaneous gas exchange estimates at each time step as compared to one estimate for the entire time series
+1) Bayesian estimation of the contribution of tidal advection on the dissolved oxygen time series

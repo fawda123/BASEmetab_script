@@ -32,7 +32,7 @@ Kareal <- 0.7993042
 # volumetric
 kvol <- Kareal / H
 
-results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-9, instant = F, update.chains = F)
+results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-9, instant = F, update.chains = T)
 
 # remove image files from output
 file.remove(list.files(path = results.dir, pattern = '\\.jpg$', full.names = T))

@@ -4,13 +4,16 @@ library(R2jags)
 library(foreach)
 library(doParallel)
 
-source('R/dosat_fun.R')
+source('R/funcs.R')
 
 # number of seconds between observations
 interval <- 900
 
 # number of MCMC iterations 
 n.iter <- 20000
+
+# run metab_update if T
+update.chains <- T
 
 # number of MCMC chains to delete
 n.burnin <- n.iter*0.5
@@ -109,6 +112,9 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
   )
+  
+  # update metab if no convergence
+  metabfit <- metab_update(metabfit, update.chains, n.iter)
   
   # insert results to table and write table
   result <- data.frame(Date=as.character(d), 

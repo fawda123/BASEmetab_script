@@ -9,17 +9,21 @@ library(doParallel)
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 1)
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 results.dir <- 'output'
 data.dir <- results.dir
 
-# file.copy('C:/proj/BASEmetab_script/data/APNERR2012dtd.csv', '.')
+# # 2012 four days
+# load(file = 'data/APNERR2012dtd.RData')
+# APNERR2012dtd <- APNERR2012dtd[6528:6911, ]
+# write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
 
-# dat <- read.csv('C:/proj/BASEmetab_script/data/APNERR2012dtd.csv', stringsAsFactors = F) %>% 
-#   .[8064:10079, ]
-# write.csv(dat, file = 'dat.csv', row.names = F)
+# 2012 all
+load(file = 'data/APNERR2012dtd.RData')
+assign('data', APNERR2012dtd)
+write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
 
 #run model
 

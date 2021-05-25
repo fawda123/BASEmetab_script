@@ -15,23 +15,23 @@ registerDoParallel(cl)
 results.dir <- 'output'
 data.dir <- results.dir
 
-# # 2012 four days
-# load(file = 'data/APNERR2012dtd.RData')
-# APNERR2012dtd <- APNERR2012dtd[6528:6911, ]
-# write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
-
-# 2012 all
+# 2012 four days
 load(file = 'data/APNERR2012dtd.RData')
-assign('data', APNERR2012dtd)
+APNERR2012dtd <- APNERR2012dtd[6528:6911, ]
 write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
+
+# # 2012 all
+# load(file = 'data/APNERR2012dtd.RData')
+# assign('data', APNERR2012dtd)
+# write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
 
 #run model
 
 # cat point bottom depth (mean of tidal vector plus 0.3m)
 H <- 1.852841
 
-# areal K
-Kareal <- 0.7993042
+# areal K, 0.80 is m/d mean wanninkhof for the year at apa 2012
+Kareal <- 0.8040253
 
 # volumetric
 kvol <- Kareal / H

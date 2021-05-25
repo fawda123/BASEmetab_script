@@ -34,7 +34,7 @@ dosat_fun <- function(tempC, salinity, atmo.pressure){
 # update.chains logical to update, only if TRUE
 # n.iter number of iterations 
 metab_update <- function(metabfit, update.chains, n.iter){
-  browser()
+
   ## diagnostic summaries
   # Rhat (srf) test
   srf <- metabfit$BUGSoutput$summary[,8]

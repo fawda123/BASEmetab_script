@@ -3,6 +3,7 @@
 library(R2jags)
 library(foreach)
 library(doParallel)
+library(WtRegDO)
 
 source('R/funcs.R')
 
@@ -18,23 +19,14 @@ update.chains <- T
 # number of MCMC chains to delete
 n.burnin <- n.iter*0.5
 
-# initial value of changes for K (/day)
-K.init <- 2 
-
-# should k be estimated with uninformative priors?
-K.est <- F
-
-# mean for the informed normal prior distribution if K.est = F
-K.meas.mean <-  0.7993042 / 1.852841
-
-# sd for the informed normal prior distribution if K.est = F
-K.meas.sd <- 1e-9 
-
 # should p be estimated?
-p.est <- FALSE
+p.est <- F
 
 # should theta be estimated?
-theta.est <- FALSE 
+theta.est <- F
+
+# site depth (m)
+depth <- 1.852841
 
 # input dataset
 # load(file = 'data/APNERR2012dtd.RData')
@@ -44,6 +36,15 @@ data <- read.csv('output/APNERR2012dtd.csv')
 
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
+
+# add Kw, wanninkhof is m/d, BASE model has k in d-1, divide by depth at site
+data$K <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
+data$Kinst <- data$K / depth / (86400 / interval)
+
+# # initial values for inits
+# # based on average A and ER from 2012 apa, A is unitless, R is mg O2 per day
+# A.init <- 8e-6
+# R.init <- 0.65
 
 # Select dates
 data$Date <- factor(data$Date, levels = unique(data$Date))
@@ -57,14 +58,14 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 1)
+cl <- makeCluster(ncores - 3)
 registerDoParallel(cl)
 
 # setup log file
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = 'R2jags') %dopar% { 
+output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'depth')) %dopar% { 
   
   sink('log.txt')
   cat('Log entry time', as.character(Sys.time()), '\n')
@@ -82,9 +83,16 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   DO.meas <- data.sub$DO.meas
   PAR <- data.sub$I
   DO.sat <- data.sub$DO.sat
+  Kinst <- data.sub$Kinst
   
-  # Initial values
-  inits <- function()	{	list(K = K.init / (86400/interval) ) }
+  # Initial values, leave as NULL if no convergence issues
+  inits <- NULL
+  # inits <- function(){
+  #   list(
+  #     A = A.init,
+  #     R = R.init / (86400 / interval)
+  #   )
+  # }
   
   # Different random seeds
   kern=as.integer(runif(1000,min=1,max=10000))
@@ -95,19 +103,14 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   n.thin <- 10
   p.est.n <- as.numeric(p.est)
   theta.est.n <- as.numeric(theta.est)
-  K.est.n <- as.numeric(K.est)
-  K.meas.mean.ts <- K.meas.mean / (86400/interval)
-  K.meas.sd.ts <- K.meas.sd / (86400/interval)
-  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat","K.init", 
-                    "K.est.n", "K.meas.mean.ts", "K.meas.sd.ts", "p.est.n", "theta.est.n")  
+  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat","p.est.n", "theta.est.n", "Kinst", "depth")#, "A.init", "R.init")  
   
-  # Define monitoring variables
-  params <- c("A","R","K","K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
-                         "gppts", "erpts", "kpts")
+  # Define monitoring variables (returned by jags)
+  params <- c("Kday", "ER","GPP","NEP")
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 
-                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = "BASE_metab_model_v2.3.txt",
+                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = "BASE_metab_model.txt",
                            n.chains = n.chains, n.iter = n.iter, n.burnin = n.burnin,
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
@@ -116,12 +119,17 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   # update metab if no convergence
   metabfit <- metab_update(metabfit, update.chains, n.iter)
   
+  # check final convergence
+  srf <- metabfit$BUGSoutput$summary[,8]
+  Rhat.test <- ifelse(any(srf > 1.1, na.rm = T) == TRUE, "Check convergence", "Fine")
+  
   # insert results to table and write table
   result <- data.frame(Date=as.character(d), 
                        GPP = metabfit$BUGSoutput$mean$GPP, 
                        ER = metabfit$BUGSoutput$mean$ER, 
                        NEP = metabfit$BUGSoutput$mean$NEP,
-                       K = metabfit$BUGSoutput$mean$K.day)
+                       Kday = metabfit$BUGSoutput$mean$Kday,
+                       convergence = Rhat.test)
   
   return(result)
   

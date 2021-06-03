@@ -1,0 +1,155 @@
+---
+output: html_document
+---
+
+```{r setup, include = FALSE, warning = F, message = F, echo = F}
+knitr::opts_chunk$set(echo = TRUE, message = F, echo = F, warning = F)
+
+library(tidyverse)
+library(lubridate)
+library(WtRegDO)
+library(here)
+library(GGally)
+
+# load results from script files
+load(file = here('data', 'outputpar.RData'))
+load(file = here('data', 'outputkinst.RData'))
+load(file = here('data', 'outputmetdt.RData'))
+
+fls <- c('outputpar', 'outputkinst', 'outputmetdt')
+names(fls) <- c('Bayes original', 'Bayes K inst', 'Bayes K inst, Met day')
+
+bsmetab <- NULL
+for(fl in fls){
+  
+  dat <- get(fl)
+  
+  out <- dat %>% 
+    select(
+      Pg = GPP, 
+      Rt = ER, 
+      NEM = NEP,
+      Date
+    ) %>% 
+    mutate(
+      Rt = -1 * Rt,
+      Date = ymd(Date) 
+    ) %>% 
+    gather('var' ,'val', -Date) %>% 
+    mutate(typ = names(fls)[fl == fls])
+  
+ bsmetab <- bind_rows(bsmetab, out)
+ 
+}
+
+load(file = here('data/DO_APNERR2012_6_12_0.8.RData'))
+tmp <- DO_APNERR2012_6_12_0.8 %>%
+  select(DateTimeStamp, DO_mgl = DO_nrm, Temp, Sal, ATemp, BP, WSpd, totpar, Tide)
+
+opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'grams') %>% 
+  gather('var', 'val', -Date) %>% 
+  mutate(typ = 'Odum')
+
+toplo <- bind_rows(bsmetab, opmetab) %>% 
+  mutate(
+    typ = factor(typ, levels = c(names(fls), 'Odum'))
+  )
+
+toplo2 <- toplo %>% 
+  spread(typ, val) %>% 
+  select(-Date)
+
+toplo2nem <- toplo2 %>% 
+  filter(var == 'NEM') %>% 
+  select(-var)
+toplo2pg <- toplo2 %>% 
+  filter(var == 'Pg') %>% 
+  select(-var)
+toplo2rt <- toplo2 %>% 
+  filter(var == 'Rt') %>% 
+  select(-var)
+```
+
+# Comparing Bayes and Odum estimates {.tabset}
+
+Evaluated 2012 Apalachicola NERRS data, detided DO Time series using 6, 12, 0.8 window widths.  Gas exchange estimated with Wanninkhof. 
+
+* __Bayes original__ Stripped down BASEmetab code
+* __Bayes K inst__ Stripped down BASEmetab code, instantaneous K
+* __Bayes K inst, Met day__ Stripped down BASEmetab code with instantaneous K and metabolic day
+* __Odum__ Odum method from WtRegDO, instantaneous K and metabolic day
+
+## Overall plots
+
+```{r, fig.height = 7, fig.width = 7}
+p1 <- ggplot(toplo, aes(x = Date, y = val, colour = var, fill = var)) + 
+  geom_line() + 
+  geom_point() + 
+  theme_minimal() + 
+  facet_wrap(~typ, ncol = 1) + 
+  theme(
+    strip.background = element_blank()
+  ) +
+  labs(
+    y = expression(paste('g ', O [2], ' ', m^-2, d^-1))
+  ) + 
+  theme(
+    axis.title.x = element_blank(), 
+    legend.title = element_blank()
+  )
+p1
+```
+
+## NEM 
+
+```{r, fig.height = 7, fig.width = 7}
+lowerfun <- function(data, mapping, lims = c(-2, 1)){
+  ggplot(data = data, mapping = mapping)+
+    geom_point() + 
+    geom_abline(slope = 1, intercept = 0, color = 'blue') + 
+    scale_x_continuous(limits = lims) + 
+    scale_y_continuous(limits = lims)
+}  
+
+ggpairs(toplo2nem, lower = list(continuous = wrap(lowerfun))) + 
+  theme_minimal() + 
+  labs(
+    title = "NEM"
+  )
+```
+
+## Pg
+
+```{r, fig.height = 7, fig.width = 7}
+lowerfun <- function(data, mapping, lims = c(-1, 2.5)){
+  ggplot(data = data, mapping = mapping)+
+    geom_point() + 
+    geom_abline(slope = 1, intercept = 0, color = 'blue') + 
+    scale_x_continuous(limits = lims) +
+    scale_y_continuous(limits = lims)
+}  
+
+ggpairs(toplo2pg, lower = list(continuous = wrap(lowerfun))) + 
+  theme_minimal() + 
+  labs(
+    title = "Pg"
+  )
+```
+
+## Rt
+
+```{r, fig.height = 7, fig.width = 7}
+lowerfun <- function(data, mapping, lims = c(-3.5, 1)){
+  ggplot(data = data, mapping = mapping)+
+    geom_point() + 
+    geom_abline(slope = 1, intercept = 0, color = 'blue') + 
+    scale_x_continuous(limits = lims) +
+    scale_y_continuous(limits = lims)
+}  
+
+ggpairs(toplo2rt, lower = list(continuous = wrap(lowerfun))) + 
+  theme_minimal() + 
+  labs(
+    title = "Rt"
+  )
+```

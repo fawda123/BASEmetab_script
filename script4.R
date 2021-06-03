@@ -49,7 +49,8 @@ data <- data %>%
   select(-solar_time, -day_hrs) %>% 
   separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
   select(-solar_period) %>% 
-  select(MetabDate = metab_date, Date, Time, everything())
+  select(MetabDate = metab_date, Date, Time, everything()) %>% 
+  mutate(MetabDate = as.character(MetabDate))
   
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)

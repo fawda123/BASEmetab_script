@@ -26,7 +26,7 @@ load(file = 'data/DO_APNERR2012_6_12_0.8.RData')
 tmp <- DO_APNERR2012_6_12_0.8 %>%
   select(DateTimeStamp, DO_mgl = DO_nrm, Temp, Sal, ATemp, BP, WSpd, totpar, Tide)
 
-opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = T) %>% 
+opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'grams') %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'Odum')
 
@@ -39,8 +39,8 @@ ggplot(toplo, aes(x = Date, y = val, colour = var, fill = var)) +
   facet_wrap(~typ, ncol = 1) + 
   theme(
     strip.background = element_blank()
-  ) + 
-  scale_y_continuous(limits= c(-300, 300))
+  )# + 
+  # scale_y_continuous(limits= c(-300, 300))
 
 # compare different gas exchange for Odum ---------------------------------
 

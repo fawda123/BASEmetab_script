@@ -10,7 +10,7 @@ source('R/funcs.R')
 interval <- 900
 
 # number of MCMC iterations 
-n.iter <- 20000
+n.iter <- 10000
 
 # run metab_update if T
 update.chains <- T
@@ -38,10 +38,10 @@ p.est <- FALSE
 theta.est <- FALSE 
 
 # input dataset
-# load(file = 'data/APNERR2012dtd.RData')
-# assign('data', APNERR2012dtd)
+load(file = 'data/APNERR2012dtd.RData')
+assign('data', APNERR2012dtd)
 # data <- read.csv('data/Yallakool_example.csv')
-data <- read.csv('output/APNERR2012dtd.csv')
+# data <- read.csv('output/APNERR2012dtd.csv')
 
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
@@ -137,5 +137,5 @@ output <- foreach(d = dates, .packages = 'R2jags') %dopar% {
   
 }
 
-outputpar2 <- do.call('rbind', output)
-save(outputpar2, file = 'data/outputpar2.RData', compress = 'xz')
+outputpar <- do.call('rbind', output)
+save(outputpar, file = 'data/outputpar.RData', compress = 'xz')

@@ -1,6 +1,8 @@
 # README
 
-Modfication of materials for running BASEmetab.  All content derived from the original repository [here](https://github.com/dgiling/BASEmetab).
+Modification of materials for running BASEmetab.  All content derived from the original repository [here](https://github.com/dgiling/BASEmetab).
+
+See [comparison plots](https://fawda123.github.io/BASEmetab_script/comp_plots) for comparison of metabolism results by different methods.
 
 * `script1.R` Run stripped down BASEmetab code
 

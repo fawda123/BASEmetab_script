@@ -23,10 +23,10 @@ update.chains <- T
 n.burnin <- n.iter*0.5
 
 # should p be estimated?
-p.est <- F
+p.est <- T
 
 # should theta be estimated?
-theta.est <- F
+theta.est <- T
 
 # site depth (m)
 depth <- 1.852841
@@ -52,7 +52,7 @@ data <- data %>%
   select(-solar_period) %>% 
   select(MetabDate = metab_date, Date, Time, everything()) %>% 
   mutate(MetabDate = as.character(MetabDate))
-  
+
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
 
@@ -154,5 +154,5 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   
 }
 
-outputmetdt <- do.call('rbind', output)
-save(outputmetdt, file = 'data/outputmetdt.RData', compress = 'xz')
+outputmetptdt <- do.call('rbind', output)
+save(outputmetptdt, file = 'data/outputmetptdt.RData', compress = 'xz')

@@ -15,9 +15,10 @@ library(GGally)
 load(file = here('data', 'outputpar.RData'))
 load(file = here('data', 'outputkinst.RData'))
 load(file = here('data', 'outputmetdt.RData'))
+load(file = here('data', 'outputmetptdt.RData'))
 
-fls <- c('outputpar', 'outputkinst', 'outputmetdt')
-names(fls) <- c('Bayes original', 'Bayes K inst', 'Bayes K inst, Met day')
+fls <- c('outputpar', 'outputkinst', 'outputmetdt', 'outputmetptdt')
+names(fls) <- c('Bayes original', 'Bayes K inst', 'Bayes K inst, Met day', 'Bayes K inst, Met day, p/t est.')
 
 bsmetab <- NULL
 for(fl in fls){
@@ -77,6 +78,7 @@ Evaluated 2012 Apalachicola NERRS data, detided DO Time series using 6, 12, 0.8 
 * __Bayes original__ Stripped down BASEmetab code
 * __Bayes K inst__ Stripped down BASEmetab code, instantaneous K
 * __Bayes K inst, Met day__ Stripped down BASEmetab code with instantaneous K and metabolic day
+* __Bayes K inst, Met day, p/t est.__ Stripped down BASEmetab code with instantaneous K, metabolic day, p and theta parameters estimated
 * __Odum__ Odum method from WtRegDO, instantaneous K and metabolic day
 
 ## Overall plots

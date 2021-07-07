@@ -1,7 +1,8 @@
-library(fwoxy)
+# library(fwoxy)
 library(tidyverse)
 library(lubridate)
 # library(WtRegDO)
+devtools::load_all('../fwoxy')
 devtools::load_all('../WtRegDO')
 
 # Set model parameters
@@ -19,7 +20,6 @@ example <- fwoxy(oxy_ic = oxy_ic, a_param = a_param, er_param = er_param,
                  ht_in = ht_const, salt_in = salt_const, temp_in = temp_const,
                  wspd_in = wspd_const)
 
-
 tomod <- example %>% 
   mutate(
     DateTimeStamp = force_tz(as.POSIXct(`time, sec`, origin = Sys.Date(), tz = 'UTC'), tzone = 'America/Jamaica'),
@@ -34,6 +34,32 @@ tomod <- example %>%
   select(DateTimeStamp, Temp, Sal, DO_obs, WSpd, ATemp, BP, Tide)
 
 # currently doesn't work
-opmetab <- ecometab(tomod, DO_var = 'DO_obs', tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'grams') 
+opmetab <- ecometab(tomod, DO_var = 'DO_obs', tz = 'America/Jamaica', lat = 29.75, long = -85, depth_val = NULL, 
+                    depth_vec = ht_const, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'mmol', instant = T) 
   
+toplo <- opmetab %>% 
+  select(DateTimeStamp, dDO, D, Pg_vol, Rt_vol) %>% 
+  mutate(
+    D = -1 * D, 
+    Rt_vol = -1 * Rt_vol
+  ) %>% 
+  gather(var, val, -DateTimeStamp)
 
+
+ggplot(toplo, aes(x = DateTimeStamp, y = val, color = var)) + 
+  geom_line()
+
+# 
+# toplo2 <- example %>% 
+#   mutate(
+#     DateTimeStamp = force_tz(as.POSIXct(`time, sec`, origin = Sys.Date(), tz = 'UTC'), tzone = 'America/Jamaica'),
+#     DO_obs = `oxy, mmol/m3` * 0.032, # to mg/L
+#     Temp = temp_const, 
+#     WSpd = wspd_const,
+#     Sal = salt_const, 
+#     ATemp = NA, 
+#     BP = 1013.25, 
+#     Tide = NA
+#   ) %>% 
+#   select(DateTimeStamp, Temp, Sal, DO_obs, WSpd, ATemp, BP, Tide)
+# 

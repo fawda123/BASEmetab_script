@@ -1,8 +1,8 @@
-# library(fwoxy)
+library(fwoxy)
 library(tidyverse)
 library(lubridate)
 # library(WtRegDO)
-devtools::load_all('../fwoxy')
+# devtools::load_all('../fwoxy')
 devtools::load_all('../WtRegDO')
 
 # Set model parameters
@@ -33,33 +33,86 @@ tomod <- example %>%
   ) %>% 
   select(DateTimeStamp, Temp, Sal, DO_obs, WSpd, ATemp, BP, Tide)
 
-# currently doesn't work
-opmetab <- ecometab(tomod, DO_var = 'DO_obs', tz = 'America/Jamaica', lat = 29.75, long = -85, depth_val = NULL, 
-                    depth_vec = ht_const, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'mmol', instant = T) 
+getsec <- function(x){
   
-toplo <- opmetab %>% 
+  sec <- seconds(x)
+  sec <- sec - (7.5 * 60)
+  sec <- sec - min(sec)
+  sec <- 1 + as.numeric(sec)
+  
+  return(sec)
+    
+}
+
+# estimate instantaneous Odum metabolism from Fwoxy output
+opmetab <- ecometab(tomod, DO_var = 'DO_obs', tz = 'America/Jamaica', lat = 29.75, long = -85, depth_val = NULL, 
+                    depth_vec = ht_const, gasex = 'Wanninkhof', gasave = 'instant', metab_units = 'mmol', instant = T) %>% 
   select(DateTimeStamp, dDO, D, Pg_vol, Rt_vol) %>% 
   mutate(
+    secs = getsec(DateTimeStamp),
     D = -1 * D, 
-    Rt_vol = -1 * Rt_vol
+    Rt_vol = -1 * Rt_vol, 
+    typ = 'Odum'
   ) %>% 
-  gather(var, val, -DateTimeStamp)
+  select(-DateTimeStamp) %>% 
+  gather(var, val, -secs, -typ)
 
+toplo1 <- example %>%
+  select(
+    secs = `time, sec`, 
+    dDO = `troc, mmol/m3/d`, 
+    D = `gasex, mmol/m3/d`,
+    Pg_vol = `gpp, mmol/m3/d`,
+    Rt_vol = `er, mmol/m3/d`
+  ) %>% 
+  mutate(
+    typ = 'Fwoxy'
+  ) %>% 
+  gather(var, val, -secs, -typ) %>% 
+  bind_rows(opmetab)
 
-ggplot(toplo, aes(x = DateTimeStamp, y = val, color = var)) + 
-  geom_line()
+p1 <- ggplot(toplo1, aes(x = secs, y = val, color = var)) + 
+  geom_line() +
+  facet_wrap(~typ, ncol = 1) +
+  theme_bw() + 
+  labs(
+    y = 'Flux, mmol/m3/d', 
+    x = 'seconds'
+  ) +
+  theme(
+    legend.title = element_blank(), 
+    strip.background = element_blank()
+  )
+p1
 
-# 
-# toplo2 <- example %>% 
-#   mutate(
-#     DateTimeStamp = force_tz(as.POSIXct(`time, sec`, origin = Sys.Date(), tz = 'UTC'), tzone = 'America/Jamaica'),
-#     DO_obs = `oxy, mmol/m3` * 0.032, # to mg/L
-#     Temp = temp_const, 
-#     WSpd = wspd_const,
-#     Sal = salt_const, 
-#     ATemp = NA, 
-#     BP = 1013.25, 
-#     Tide = NA
-#   ) %>% 
-#   select(DateTimeStamp, Temp, Sal, DO_obs, WSpd, ATemp, BP, Tide)
-# 
+toplo2 <- toplo1 %>% 
+  spread(typ, val)
+p2 <- ggplot(toplo2, aes(x = Fwoxy, y = Odum, color = var)) + 
+  geom_point() +
+  facet_wrap(~var, ncol = 2, scales = 'free') +
+  theme_bw() + 
+  geom_abline(intercept = 0, slope = 1) +
+  labs(
+    y = 'Odum, Flux, mmol/m3/d', 
+    x = 'Fwoxy, flux, mmol/m3/d'
+  ) +
+  theme(
+    legend.title = element_blank(), 
+    strip.background = element_blank()
+  )
+p2
+
+p3 <- ggplot(toplo1, aes(x = secs, y = val, color = typ)) + 
+  geom_line() +
+  facet_wrap(~var, ncol = 1, scales = 'free') +
+  theme_bw() + 
+  geom_abline(intercept = 0, slope = 1) +
+  labs(
+    y = 'Odum, Flux, mmol/m3/d', 
+    x = 'Fwoxy, flux, mmol/m3/d'
+  ) +
+  theme(
+    legend.title = element_blank(), 
+    strip.background = element_blank()
+  )
+p3

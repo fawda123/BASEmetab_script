@@ -2,6 +2,8 @@
 
 Modification of materials for running BASEmetab.  All content derived from the original repository [here](https://github.com/dgiling/BASEmetab).
 
+Comparison of metabolism results from Fwoxy and Odum using Fwoxy estimated DO [here](https://fawda123.github.io/BASEmetab_script/fwoxy_comp).
+
 See [comparison plots](https://fawda123.github.io/BASEmetab_script/comp_plots) for comparison of metabolism results by different methods.
 
 * `script1.R` Run stripped down BASEmetab code

@@ -24,7 +24,7 @@ fls <- c('outputpar', 'outputkinst', 'outputmetdt', 'outputmetptdt')
 names(fls) <- c('Bayes original', 'Bayes K inst', 'Bayes K inst, Met day', 'Bayes K inst, Met day, p/t est.')
 
 bsmetab <- NULL
-# basemetab reports as volumetric, convert to areal
+# basemetab reports O2 as mg/l/d, same as g/m3/d, convert to g/m2/d as areal by multiplying by depth
 for(fl in fls){
   
   dat <- get(fl)

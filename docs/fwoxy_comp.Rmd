@@ -47,7 +47,7 @@ The oxygen time series can be used from the fwoxy output with the Odum open-wate
 tomod <- example %>% 
   mutate(
     DateTimeStamp = force_tz(as.POSIXct(`time, sec`, origin = Sys.Date(), tz = 'UTC'), tzone = 'America/Jamaica'),
-    DO_obs = `oxy, mmol/m3` * 0.032, # to mg/L
+    DO_obs = `oxy, mmol/m3` * 0.032, # to mg/L, same as g/m3
     Temp = temp_const, 
     WSpd = wspd_const,
     Sal = salt_const, 

@@ -2,6 +2,7 @@
 # Running original BASEmetab model ----------------------------------------
 
 library(BASEmetab)
+# devtools::load_all('../BASEmetab')
 library(tidyverse)
 library(R2jags)
 library(foreach)
@@ -17,7 +18,7 @@ data.dir <- results.dir
 
 # 2012 four days
 load(file = 'data/APNERR2012dtd.RData')
-APNERR2012dtd <- APNERR2012dtd[6528:6911, ]
+APNERR2012dtd <- APNERR2012dtd[6528:6911, -8] # including wspd breaks it
 write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
 
 # # 2012 all
@@ -36,7 +37,7 @@ Kareal <- 0.8040253
 # volumetric
 kvol <- Kareal / H
 
-results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-9, instant = F, update.chains = T)
+results <- bayesmetab(data.dir, results.dir, interval = 900, K.est = F, K.meas.mean = kvol, K.meas.sd = 1e-9, instant = T, update.chains = T)
 
 # remove image files from output
 file.remove(list.files(path = results.dir, pattern = '\\.jpg$', full.names = T))

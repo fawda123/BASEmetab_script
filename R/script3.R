@@ -4,11 +4,9 @@ library(R2jags)
 library(foreach)
 library(doParallel)
 library(WtRegDO)
-library(dplyr)
-library(tidyr)
-library(lubridate)
+library(here)
 
-source('R/funcs.R')
+source(here('R/funcs.R'))
 
 # number of seconds between observations
 interval <- 900
@@ -32,27 +30,11 @@ theta.est <- F
 depth <- 1.852841
 
 # input dataset
-load(file = 'data/APNERR2012dtd.RData')
+load(file = here('data/APNERR2012dtd.RData'))
 assign('data', APNERR2012dtd)
 # data <- read.csv('data/Yallakool_example.csv')
 # data <- read.csv('output/APNERR2012dtd.csv')
 
-# get metabolic day
-tz <- 'America/Jamaica'
-long <- -85
-lat <- 29.75
-data <- data %>% 
-  unite('DateTimeStamp', Date, Time, sep = ' ') %>% 
-  mutate(
-    DateTimeStamp = ymd_hms(DateTimeStamp, tz = tz)
-  ) %>% 
-  WtRegDO::met_day_fun(tz = tz, long = long, lat = lat) %>% 
-  select(-solar_time, -day_hrs) %>% 
-  separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(-solar_period) %>% 
-  select(MetabDate = metab_date, Date, Time, everything()) %>% 
-  mutate(MetabDate = as.character(MetabDate))
-  
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
 
@@ -66,11 +48,11 @@ data$Kinst <- data$K / depth / (86400 / interval)
 # R.init <- 0.65
 
 # Select dates
-data$MetabDate <- factor(data$MetabDate, levels = unique(data$MetabDate))
-dates <- unique(data$MetabDate)
+data$Date <- factor(data$Date, levels = unique(data$Date))
+dates <- unique(data$Date)
 
 # evaluate dates with complete record
-n.records <- tapply(data$MetabDate, INDEX=data$MetabDate, FUN=length)
+n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
@@ -86,13 +68,13 @@ strt <- Sys.time()
 # process
 output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'depth')) %dopar% { 
   
-  sink('log.txt')
+  sink(here('log.txt'))
   cat('Log entry time', as.character(Sys.time()), '\n')
   cat(which(d == dates), ' of ', length(dates), '\n')
   print(Sys.time() - strt)
   sink()
   
-  data.sub <- data[data$MetabDate == d,]
+  data.sub <- data[data$Date == d,]
   
   # Define data vectors
   num.measurements <- nrow(data.sub)
@@ -129,7 +111,7 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 
-                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = "BASE_metab_model.txt",
+                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = here("BASE_metab_model.txt"),
                            n.chains = n.chains, n.iter = n.iter, n.burnin = n.burnin,
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
@@ -154,5 +136,5 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   
 }
 
-outputmetdt <- do.call('rbind', output)
-save(outputmetdt, file = 'data/outputmetdt.RData', compress = 'xz')
+outputkints <- do.call('rbind', output)
+save(outputkinst, file = here('data/outputkinst.RData'), compress = 'xz')

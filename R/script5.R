@@ -7,24 +7,9 @@ library(WtRegDO)
 library(dplyr)
 library(tidyr)
 library(lubridate)
-library(fwoxy)
+library(here)
 
-source('R/funcs.R')
-
-# Set model parameters
-oxy_ic <- 250           # (mmol/m^3), initial oxygen concentration
-a_param <- 0.2          # ((mmol/m^3)/day)/(W/m^2), light efficiency
-er_param <- 20          # (mmol/m^3/day), ecosystem respiration
-
-# Constant Forcings
-ht_const <- 3           # m, height of the water column
-salt_const <- 25        # ppt, salinity
-temp_const <- 25        # deg C, water temperature
-wspd_const <- 3         # m/s, wind speed at 10 m
-
-example <- fwoxy(oxy_ic = oxy_ic, a_param = a_param, er_param = er_param, 
-                 ht_in = ht_const, salt_in = salt_const, temp_in = temp_const,
-                 wspd_in = wspd_const)
+source(here('R/funcs.R'))
 
 # number of seconds between observations
 interval <- 900
@@ -39,34 +24,35 @@ update.chains <- T
 n.burnin <- n.iter*0.5
 
 # should p be estimated?
-p.est <- FALSE
+p.est <- T
 
 # should theta be estimated?
-theta.est <- FALSE 
+theta.est <- T
 
 # site depth (m)
-depth <- ht_const
+depth <- 1.852841
 
-# prep fwoxy output for BASEmetab
-# DO.meas is mmol/m3, should be mg/l
-# tempC is C, should be C
-# WSpd is m/s, should be m/s
-# salinity is ppt, should be ppt
-# I (par) is W/m2, should be umol/m2/s (multiply by 4.57 https://www.controlledenvironments.org/wp-content/uploads/sites/6/2017/06/Ch01.pdf)
-# atmo.pressure should be atm, 1 at sea level
-data <- example %>% 
+# input dataset
+load(file = here('data/APNERR2012dtd.RData'))
+assign('data', APNERR2012dtd)
+# data <- read.csv('data/Yallakool_example.csv')
+# data <- read.csv('output/APNERR2012dtd.csv')
+
+# get metabolic day
+tz <- 'America/Jamaica'
+long <- -85
+lat <- 29.75
+data <- data %>% 
+  unite('DateTimeStamp', Date, Time, sep = ' ') %>% 
   mutate(
-    DateTimeStamp = force_tz(as.POSIXct(`time, sec`, origin = Sys.Date(), tz = 'UTC'), tzone = 'America/Jamaica'),
-    DateTimeStamp = as.character(DateTimeStamp),
-    DO.meas = `oxy, mmol/m3` * 0.032, # to mg/L
-    tempC = temp_const, 
-    WSpd = wspd_const,
-    salinity = salt_const, 
-    I = fun_par_sin_model(`time, sec`) * 4.57,
-    atmo.pressure = 1 
-  ) %>%
+    DateTimeStamp = ymd_hms(DateTimeStamp, tz = tz)
+  ) %>% 
+  WtRegDO::met_day_fun(tz = tz, long = long, lat = lat) %>% 
+  select(-solar_time, -day_hrs) %>% 
   separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(Date, Time, I, tempC, DO.meas, atmo.pressure, salinity, WSpd)  
+  select(-solar_period) %>% 
+  select(MetabDate = metab_date, Date, Time, everything()) %>% 
+  mutate(MetabDate = as.character(MetabDate))
 
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
@@ -75,19 +61,24 @@ data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
 data$K <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
 data$Kinst <- data$K / depth / (86400 / interval)
 
+# # initial values for inits
+# # based on average A and ER from 2012 apa, A is unitless, R is mg O2 per day
+# A.init <- 8e-6
+# R.init <- 0.65
+
 # Select dates
-data$Date <- factor(data$Date, levels = unique(data$Date))
-dates <- unique(data$Date)
+data$MetabDate <- factor(data$MetabDate, levels = unique(data$MetabDate))
+dates <- unique(data$MetabDate)
 
 # evaluate dates with complete record
-n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
+n.records <- tapply(data$MetabDate, INDEX=data$MetabDate, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 2)
+cl <- makeCluster(ncores - 3)
 registerDoParallel(cl)
 
 # setup log file
@@ -96,13 +87,13 @@ strt <- Sys.time()
 # process
 output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'depth')) %dopar% { 
   
-  sink('log.txt')
+  sink(here('log.txt'))
   cat('Log entry time', as.character(Sys.time()), '\n')
   cat(which(d == dates), ' of ', length(dates), '\n')
   print(Sys.time() - strt)
   sink()
   
-  data.sub <- data[data$Date == d,]
+  data.sub <- data[data$MetabDate == d,]
   
   # Define data vectors
   num.measurements <- nrow(data.sub)
@@ -135,11 +126,11 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat","p.est.n", "theta.est.n", "Kinst", "depth")#, "A.init", "R.init")  
   
   # Define monitoring variables (returned by jags)
-  params <- c("Kday", "ER", "GPP"," NEP", "gppts", "erpts", "gets", "DO.modelled")
+  params <- c("Kday", "ER","GPP","NEP")
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 
-                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = "BASE_metab_model.txt",
+                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = here("BASE_metab_model.txt"),
                            n.chains = n.chains, n.iter = n.iter, n.burnin = n.burnin,
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
@@ -154,22 +145,15 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   
   # insert results to table and write table
   result <- data.frame(Date=as.character(d), 
-                       Time = data.sub$Time,
-                       gppts = c(NA, metabfit$BUGSoutput$mean$gppts), # O2, g/m3/15 min
-                       erpts = c(NA, metabfit$BUGSoutput$mean$erpts), # O2, g/m3/15 min 
-                       gets = c(NA, metabfit$BUGSoutput$mean$gets), # O2, g/m3/15 min
-                       DO.modelled = metabfit$BUGSoutput$mean$DO.modelled) # O2 g/m3
+                       GPP = metabfit$BUGSoutput$mean$GPP, 
+                       ER = metabfit$BUGSoutput$mean$ER, 
+                       NEP = metabfit$BUGSoutput$mean$NEP,
+                       Kday = metabfit$BUGSoutput$mean$Kday,
+                       convergence = Rhat.test)
   
   return(result)
   
 }
 
-# correct instantanous obs to daily, g to mmol
-fwoxybasemetab <- do.call('rbind', output) %>% 
-  mutate(
-    gpp = gppts * (86400 / interval) / 0.032, # O2 mmol/m3/d
-    er = erpts * (86400 / interval) / 0.032, # O2 mmol/m3/d
-    ge = -1 * gets * (86400 / interval) / 0.032, # O2 mmol/m3/d
-    do = DO.modelled / 0.032 # O2 mmol/m3
-  )
-save(fwoxybasemetab, file = 'data/fwoxybasemetab.RData', compress = 'xz')
+outputmetptdt <- do.call('rbind', output)
+save(outputmetptdt, file = here('data/outputmetptdt.RData'), compress = 'xz')

@@ -57,3 +57,15 @@ metab_update <- function(metabfit, update.chains, n.iter){
   return(metabfit)
   
 }
+
+# function to make seconds in opmetab match fwoxy
+getsec <- function(x){
+  
+  sec <- seconds(x)
+  sec <- sec - (7.5 * 60)
+  sec <- sec - min(sec)
+  sec <- 1 + as.numeric(sec)
+  
+  return(sec)
+  
+}

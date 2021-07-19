@@ -20,7 +20,7 @@ This document provides a brief comparison of metabolism results obtained from th
 
 ## Background 
 
-The original BASEmetab package includes a single function `bayesmetab()` that processes input data files for use with the JAGS model (i.e., [BASE_metab_model_v2.3.txt](https://github.com/dgiling/BASEmetab/blob/master/inst/BASE_metab_model_v2.3.txt)).  This function includes routines for data pre-processing, QA/QC checks for model results, and extraneous output not relevant to our questions.  We attempted to extract the relevant code from the `bayesmetab()` function to simplify the core components used by the JAGS model and to streamline processing for use with multiple datasets.  This simplified version is available as a standalone R script [here](https://github.com/fawda123/BASEmetab_script/blob/master/script.R) and a simplified JAGS model [here](https://github.com/fawda123/BASEmetab_script/blob/master/BASE_metab_model_v2.3.txt).  
+The original BASEmetab package includes a single function `bayesmetab()` that processes input data files for use with the JAGS model (i.e., [BASE_metab_model_v2.3.txt](https://github.com/dgiling/BASEmetab/blob/master/inst/BASE_metab_model_v2.3.txt)).  This function includes routines for data pre-processing, QA/QC checks for model results, and extraneous output not relevant to our questions.  We attempted to extract the relevant code from the `bayesmetab()` function to simplify the core components used by the JAGS model and to streamline processing for use with multiple datasets.  This simplified version is available as a standalone R script [here](https://github.com/fawda123/BASEmetab_script/blob/master/R/script1.R) and a simplified JAGS model [here](https://github.com/fawda123/BASEmetab_script/blob/master/BASE_metab_model_v2.3.txt).  
 
 Modifications to the standalone R script include: 
 
@@ -30,7 +30,7 @@ Modifications to the standalone R script include:
 
 Modifications to the JAGS model include:
 
-* DO saturation is estimated at each time step prior to running the model (previously this was done as a separate loop inside the JAGS model).  DO saturation is estimated using the observed data in the standalone R script with a helper function available [here](https://github.com/fawda123/BASEmetab_script/blob/master/R/dosat_fun.R).
+* DO saturation is estimated at each time step prior to running the model (previously this was done as a separate loop inside the JAGS model).  DO saturation is estimated using the observed data in the standalone R script with a helper function available [here](https://github.com/fawda123/BASEmetab_script/blob/master/R/funcs.R).
 * An additional loop that calculated instantaneous metabolic estimates was combined with the main loop for estimating dissolved oxygen mass balance.
 
 An option to `update.chains` is also available in the `bayesmetab()` function as part of the JAGS convergence procedure that uses additional Monte Carlo sampling if results are unstable.  This option was not used (i.e., `update.chains = F`) when comparing the stripped down version with BASEmetab because it was not retained in the former.  It should be included in future analyses to ensure the results are robust.  
@@ -41,8 +41,8 @@ Finally, the original BASEmetab method estimates gas exchange using prior distri
 
 A four day [Appalachicola test dataset](https://github.com/fawda123/BASEmetab_script/blob/master/output/APNERR2012dtd.csv) was used to compare results between the stripped down version and the original BASEmetab output.  This sample dataset uses "detided" dissolved oxygen to estimate metabolism. A full comparison of the methods and results can be done by [cloning](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/cloning-a-repository) the [GitHub repository](https://github.com/fawda123/BASEmetab_script) that includes all functions and datasets in a portable directory, then running the metbolism functions on a local computer. Once the repository is available locally, the following steps can reproduce the comparison of results below. 
 
-1) Run the code in [script.R](https://github.com/fawda123/BASEmetab_script/blob/master/script.R) to obtain results from stripped down version
-1) Run the code in [script2.R](https://github.com/fawda123/BASEmetab_script/blob/master/script2.R) to obtain results from the original BASEmetab package
+1) Run the code in [script1.R](https://github.com/fawda123/BASEmetab_script/blob/master/R/script1.R) to obtain results from stripped down version
+1) Run the code in [script2.R](https://github.com/fawda123/BASEmetab_script/blob/master/R/script2.R) to obtain results from the original BASEmetab package
 1) Run the examples below to view the comparison
 
 The results from the stripped down version are available in the repository as a .RData object file called [outputpar](https://github.com/fawda123/BASEmetab_script/blob/master/data/outputpar.RData).  The results from the BASEmetab original method are available as a .csv file called [BASe_results_2020-12-21 161657.csv](https://github.com/fawda123/BASEmetab_script/blob/master/output/BASE_results_2020-12-21%20161657.csv).  For simplicity, they are named `strpdat` and `origdat` for the stripped down and original results in this document.  Note that `origdat` includes many more columns than `strpdat` as part of the original output from BASEmetab.

@@ -3,12 +3,9 @@
 library(R2jags)
 library(foreach)
 library(doParallel)
-library(WtRegDO)
-library(dplyr)
-library(tidyr)
-library(lubridate)
+library(here)
 
-source('R/funcs.R')
+source(here('R/funcs.R'))
 
 # number of seconds between observations
 interval <- 900
@@ -22,77 +19,62 @@ update.chains <- T
 # number of MCMC chains to delete
 n.burnin <- n.iter*0.5
 
+# initial values for inits
+K.init <- 2
+  
+# should k be estimated with uninformative priors?
+K.est <- F
+
+# mean for the informed normal prior distribution if K.est = F
+# 0.80 is m/d mean wanninkhof for the year, 1.85 is depth at the site, BASE model uses k as d-1
+K.meas.mean <-   0.8040253 / 1.852841
+
+# sd for the informed normal prior distribution if K.est = F
+K.meas.sd <- 1e-9 
+
 # should p be estimated?
-p.est <- T
+p.est <- FALSE
 
 # should theta be estimated?
-theta.est <- T
-
-# site depth (m)
-depth <- 1.852841
+theta.est <- FALSE 
 
 # input dataset
-load(file = 'data/APNERR2012dtd.RData')
+load(file = here('data/APNERR2012dtd.RData'))
 assign('data', APNERR2012dtd)
 # data <- read.csv('data/Yallakool_example.csv')
 # data <- read.csv('output/APNERR2012dtd.csv')
 
-# get metabolic day
-tz <- 'America/Jamaica'
-long <- -85
-lat <- 29.75
-data <- data %>% 
-  unite('DateTimeStamp', Date, Time, sep = ' ') %>% 
-  mutate(
-    DateTimeStamp = ymd_hms(DateTimeStamp, tz = tz)
-  ) %>% 
-  WtRegDO::met_day_fun(tz = tz, long = long, lat = lat) %>% 
-  select(-solar_time, -day_hrs) %>% 
-  separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(-solar_period) %>% 
-  select(MetabDate = metab_date, Date, Time, everything()) %>% 
-  mutate(MetabDate = as.character(MetabDate))
-
 # add DO saturated
 data$DO.sat <- dosat_fun(data$tempC, data$salinity, data$atmo.pressure)
 
-# add Kw, wanninkhof is m/d, BASE model has k in d-1, divide by depth at site
-data$K <- f_calcWanninkhof(data$tempC, data$salinity, data$WSpd)
-data$Kinst <- data$K / depth / (86400 / interval)
-
-# # initial values for inits
-# # based on average A and ER from 2012 apa, A is unitless, R is mg O2 per day
-# A.init <- 8e-6
-# R.init <- 0.65
-
 # Select dates
-data$MetabDate <- factor(data$MetabDate, levels = unique(data$MetabDate))
-dates <- unique(data$MetabDate)
+data$Date <- factor(data$Date, levels = unique(data$Date))
+dates <- unique(data$Date)
 
 # evaluate dates with complete record
-n.records <- tapply(data$MetabDate, INDEX=data$MetabDate, FUN=length)
+n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
 dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 3)
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # setup log file
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'depth')) %dopar% { 
+output <- foreach(d = dates, .packages = 'R2jags') %dopar% { 
   
-  sink('log.txt')
+  sink(here('log.txt'))
   cat('Log entry time', as.character(Sys.time()), '\n')
   cat(which(d == dates), ' of ', length(dates), '\n')
   print(Sys.time() - strt)
   sink()
   
-  data.sub <- data[data$MetabDate == d,]
+  data.sub <- data[data$Date == d,]
   
   # Define data vectors
   num.measurements <- nrow(data.sub)
@@ -102,16 +84,13 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   DO.meas <- data.sub$DO.meas
   PAR <- data.sub$I
   DO.sat <- data.sub$DO.sat
-  Kinst <- data.sub$Kinst
   
-  # Initial values, leave as NULL if no convergence issues
-  inits <- NULL
-  # inits <- function(){
-  #   list(
-  #     A = A.init,
-  #     R = R.init / (86400 / interval)
-  #   )
-  # }
+  # Initial values
+  inits <- function(){
+    list(
+      K = K.init / (86400 / interval)
+      )
+    }
   
   # Different random seeds
   kern=as.integer(runif(1000,min=1,max=10000))
@@ -122,14 +101,19 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
   n.thin <- 10
   p.est.n <- as.numeric(p.est)
   theta.est.n <- as.numeric(theta.est)
-  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat","p.est.n", "theta.est.n", "Kinst", "depth")#, "A.init", "R.init")  
+  K.est.n <- as.numeric(K.est)
+  K.meas.mean.ts <- K.meas.mean / (86400/interval)
+  K.meas.sd.ts <- K.meas.sd / (86400/interval)
+  data.list <- list("num.measurements","interval","tempC","DO.meas","PAR","DO.sat", "K.init",
+                    "K.est.n", "K.meas.mean.ts", "K.meas.sd.ts", "p.est.n", "theta.est.n")  
   
-  # Define monitoring variables (returned by jags)
-  params <- c("Kday", "ER","GPP","NEP")
+  # Define monitoring variables
+  params <- c("A","R","K","K.day","p","theta","tau","ER","GPP","NEP","PR","sum.obs.resid","sum.ppa.resid","PPfit","DO.modelled",
+                         "gppts", "erpts", "kpts")
   
   ## Call jags ##
   metabfit <- do.call(R2jags::jags.parallel, 
-                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = "BASE_metab_model.txt",
+                      list(data = data.list, inits = inits, parameters.to.save = params, model.file = here("BASE_metab_model_v2.3.txt"),
                            n.chains = n.chains, n.iter = n.iter, n.burnin = n.burnin,
                            n.thin = n.thin, n.cluster = n.chains, DIC = TRUE,
                            jags.seed = 123, digits=5)
@@ -147,12 +131,12 @@ output <- foreach(d = dates, .packages = 'R2jags', .export = c('interval', 'dept
                        GPP = metabfit$BUGSoutput$mean$GPP, 
                        ER = metabfit$BUGSoutput$mean$ER, 
                        NEP = metabfit$BUGSoutput$mean$NEP,
-                       Kday = metabfit$BUGSoutput$mean$Kday,
+                       K = metabfit$BUGSoutput$mean$K.day, 
                        convergence = Rhat.test)
   
   return(result)
   
 }
 
-outputmetptdt <- do.call('rbind', output)
-save(outputmetptdt, file = 'data/outputmetptdt.RData', compress = 'xz')
+outputpar <- do.call('rbind', output)
+save(outputpar, file = here('data/outputpar.RData', compress = 'xz'))

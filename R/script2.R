@@ -7,19 +7,20 @@ library(tidyverse)
 library(R2jags)
 library(foreach)
 library(doParallel)
+library(here)
 
 # setup parallel backend
 ncores <- detectCores()
 cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
-results.dir <- 'output'
+results.dir <- here('output')
 data.dir <- results.dir
 
 # 2012 four days
-load(file = 'data/APNERR2012dtd.RData')
+load(file = here('data/APNERR2012dtd.RData'))
 APNERR2012dtd <- APNERR2012dtd[6528:6911, -8] # including wspd breaks it
-write.csv(APNERR2012dtd, 'output/APNERR2012dtd.csv', row.names = F)
+write.csv(APNERR2012dtd, here('output/APNERR2012dtd.csv'), row.names = F)
 
 # # 2012 all
 # load(file = 'data/APNERR2012dtd.RData')

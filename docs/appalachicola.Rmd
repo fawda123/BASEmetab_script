@@ -1,0 +1,77 @@
+---
+output: html_document
+---
+  
+# Appalachicola exploration 
+
+```{r, warning = F, message = F}
+knitr::opts_chunk$set(echo = TRUE, message = F, echo = F, warning = F)
+
+# library(WtRegDO)
+devtools::load_all('../WtRegDO')
+box::use(
+  here[here], 
+  doParallel[registerDoParallel], 
+  parallel[detectCores],
+  dplyr[...],
+  SWMPr[import_local, qaqc, comb]
+  )
+```
+
+This script imports weather and water quality data for 2006 to 2019, combines, .....
+```{r eval = F}
+# import apacp data, clean up with qaqc
+apacpwq <- import_local(station_code = 'apacpwq', path = here('data/284523.zip'))
+apacpwq <- qaqc(apacpwq, qaqc_keep = c('0', '1', '2', '3', '4', '5'))
+apaebmet <- import_local(station_code = 'apaebmet', path = here('data/284523.zip'))
+apaebmet <- qaqc(apaebmet, qaqc_keep = c('0', '1', '2', '3', '4', '5'))
+
+# combine wx and wq, select/rename relevant columns
+apa <- comb(apacpwq, apaebmet, timestep = 60, method = 'union') %>% 
+  select(
+    DateTimeStamp = datetimestamp, 
+    Temp = temp, 
+    Sal = sal, 
+    DO_obs = do_mgl,
+    WSpd = wspd,
+    BP = bp,
+    Tide = depth
+  )
+
+# site metadata
+locs <- SWMPr::stat_locs %>% 
+  filter(station_code == 'apacp')
+lat <- locs$latitude
+long <- locs$longitude
+tz <- attr(apa$DateTimeStamp, 'tzone')
+
+# setup parallel backend
+ncores <- detectCores()  
+registerDoParallel(cores = ncores - 1)
+
+cordat <- evalcor(apa, tz, lat, long, progress = T, plot = F)
+apa$cordat <- cordat
+apaobs <- apa %>% 
+  filter(!is.na(Tide))
+
+# detiding
+apadtd <- wtreg(apaobs, tz = tz, lat = lat, long = long, sine = T, gasex = 'Wanninkhof', wins = list(3, 12, 0.2), progress = T, parallel = TRUE)
+
+# metablism on observed and detided
+apaobseco <- ecometab(apa, tz = tz, lat = lat, long = long, DO_var = 'DO_obs', gasex = 'Wanninkhof')
+apadtdeco <- ecometab(apa, tz = tz, lat = lat, long = long, DO_var = 'DO_dtd', gasex = 'Wanninkhof')
+
+# save the files
+save(apaobs, file = here('data/apaobs.RData'))
+save(apadtd, file = here('data/apadtd.RData'))
+save(apaobseco, file = here('data/apaobseco.RData'))
+save(apadtdeco, file = here('data/apadtseco.RData'))
+```
+
+```{r}
+load(file = here('data/apaobs.RData'))
+load(file = here('data/apadtd.RData'))
+load(file = here('data/apaobseco.RData'))
+load(file = here('data/apadtseco.RData'))
+```
+

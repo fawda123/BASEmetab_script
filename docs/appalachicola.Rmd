@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, message = F, echo = F, warning = F)
 # library(WtRegDO)
 devtools::load_all('../WtRegDO')
 box::use(
-  here[here], 
+  here[...], 
   doParallel[registerDoParallel], 
   parallel[detectCores],
   dplyr[...],
@@ -58,8 +58,8 @@ apaobs <- apa %>%
 apadtd <- wtreg(apaobs, tz = tz, lat = lat, long = long, sine = T, gasex = 'Wanninkhof', wins = list(3, 12, 0.2), progress = T, parallel = TRUE)
 
 # metablism on observed and detided
-apaobseco <- ecometab(apa, tz = tz, lat = lat, long = long, DO_var = 'DO_obs', gasex = 'Wanninkhof')
-apadtdeco <- ecometab(apa, tz = tz, lat = lat, long = long, DO_var = 'DO_dtd', gasex = 'Wanninkhof')
+apaobseco <- ecometab(apaobs, tz = tz, lat = lat, long = long, DO_var = 'DO_obs', gasex = 'Wanninkhof')
+apadtdeco <- ecometab(apadtd, tz = tz, lat = lat, long = long, DO_var = 'DO_nrm', gasex = 'Wanninkhof')
 
 # save the files
 save(apaobs, file = here('data/apaobs.RData'))

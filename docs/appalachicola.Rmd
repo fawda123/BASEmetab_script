@@ -7,6 +7,8 @@ title: Appalachicola exploration
 
 Below is an exploration of DO and metabolism data from the Cat Point station at Appalachicola, using data from 2006 to 2019.  It incorporates some changes to the WtRegDO package on the sine branch.  Specifically, the `meteval` function was updated to include anomalous estimates by month and changes the required data inputs if using different gas exchanges methods (i.e., air temperature is no longer a requirement if using the Wanninkhof method). 
 
+# {.tabset .tabset-panel}
+
 ```{r setup, warning = F, message = F}
 knitr::opts_chunk$set(echo = TRUE, message = F, echo = T, warning = F)
 
@@ -21,7 +23,9 @@ box::use(
   SWMPr[import_local, qaqc, comb], 
   ggplot2[...], 
   tibble[enframe], 
-  lubridate[...]
+  lubridate[...], 
+  ggforce[facet_zoom],
+  oce[...]
   )
 
 # base ggplot themef
@@ -35,6 +39,8 @@ thm <- theme_minimal(base_size = 14) +
     legend.position = 'top'
   )
 ```
+
+## Data prep
 
 This code chunk does the following:
 
@@ -96,6 +102,8 @@ save(apadtd, file = here('data/apadtd.RData'))
 save(apaobseco, file = here('data/apaobseco.RData'))
 save(apadtdeco, file = here('data/apadtdeco.RData'))
 ```
+
+## Evaluate anomalies and PAR
 
 Load the files saved from above.
 
@@ -352,3 +360,119 @@ ggplot(toplo, aes(x = `PAR level`, y = `% anomalies`, fill = name)) +
   thm
 ```
 
+## Evaluate sun angle and tidal correlations
+
+```{r, fig.height = 5, fig.width = 10}
+# site metadata
+locs <- SWMPr::stat_locs %>% 
+  filter(station_code == 'apacp')
+lat <- locs$latitude
+long <- locs$longitude
+
+# get sun elevation angle
+apasun <- apaobs %>% 
+  mutate(
+    sunang = sunAngle(DateTimeStamp, longitude = long, latitude = lat)$altitude, 
+    Date = as.Date(DateTimeStamp)
+  )
+
+# plot
+dts1 <- ymd_hms(c('2009-02-01 00:00:00','2009-03-01 00:00:00'))
+dts2 <- as.Date(c('2009-08-01 00:00:00','2009-09-01 00:00:00'))
+p <- ggplot(apasun, aes(x = DateTimeStamp, y = sunang)) +
+  geom_line() +
+  geom_hline(yintercept = 0, color = 'lightblue') +
+  theme_bw() + 
+  labs(
+    x = NULL, 
+    y = 'Sun elevation (degrees)'
+  )
+
+p + facet_zoom(x = DateTimeStamp >= dts1[1] & DateTimeStamp <= dts1[2], zoom.size = 1)
+p + facet_zoom(x = DateTimeStamp >= dts2[1] & DateTimeStamp <= dts2[2], zoom.size = 1)
+```
+
+Maybe we should foor the sun elevation at zero?
+
+Now let's look at the tidal harmonics using the oce R package and the tidem function to predict major tidal harmonics. 
+
+```{r, fig.height = 8, fig.width = 9}
+datsl <- as.sealevel(elevation = apaobs$Tide, time = apaobs$DateTimeStamp)
+plot(datsl)
+```
+
+We want to predict the major diurnal and semidiurnal components, plus the solar annual constituent.
+
+```{r}
+# tidal components to estimate
+constituents <- c('M2', 'S2', 'K1', 'O1', 'SA')
+
+# loop through tidal components, predict each with tidem
+preds <- sapply(constituents, function(x){
+  
+  mod <- tidem(t = datsl, constituent = x)
+  pred <- predict(mod)
+  pred - mean(pred)
+  
+})
+```
+
+Here are the major diurnal/semidiurnal components for the same month slices from the sun angle plot. 
+
+```{r, fig.height = 8, fig.width = 9}
+# prep for plot
+toplo <- preds %>%
+  data.frame %>%
+  mutate(DateTimeStamp = apaobs$DateTimeStamp) %>%
+  gather('component', 'estimate', -DateTimeStamp) %>%
+  mutate(component = factor(component, level = c('Estimated', constituents)))
+
+toplo1 <- toplo %>% 
+  filter(DateTimeStamp >= dts1[1] & DateTimeStamp <= dts1[2])
+toplo2 <- toplo %>% 
+  filter(DateTimeStamp >= dts2[1] & DateTimeStamp <= dts2[2])
+
+ggplot(toplo1, aes(x = DateTimeStamp, y = estimate, group = component)) +
+  geom_line() +
+  geom_hline(yintercept = 0, color = 'lightblue') +
+  facet_wrap(~component, ncol = 1) +
+  thm + 
+  labs(
+    x = NULL, 
+    y = 'Height (m)'
+  )
+
+ggplot(toplo2, aes(x = DateTimeStamp, y = estimate, group = component)) +
+  geom_line() +
+  geom_hline(yintercept = 0, color = 'lightblue') +
+  facet_wrap(~component, ncol = 1) +
+  thm + 
+  labs(
+    x = NULL, 
+    y = 'Height (m)'
+  )
+```
+
+Looking only at the solar annual component. 
+
+```{r, fig.height = 4, fig.width = 10}
+toplo3 <- toplo %>% 
+  filter(component %in% 'SA')
+
+ggplot(toplo3, aes(x = DateTimeStamp, y = estimate, group = component)) +
+  geom_line() +
+  geom_hline(yintercept = 0, color = 'lightblue') +
+  facet_wrap(~component, ncol = 1) +
+  thm + 
+  labs(
+    x = NULL, 
+    y = 'Height (m)'
+  )
+```
+
+## Half-baked conclusions
+
+* Detiding removes more anamolous estimates in the cooler months. 
+* Mid-summer reduction Pg is suspect, likely related to over-smoothing from weighted regression
+* More anamolous estimates seem to occur at lower PAR values, detiding occurs across all PAR values
+* Need to better understand the `evalcor` function - do we floor the sun elevation angles at zero?  Is it related to the SA component? 

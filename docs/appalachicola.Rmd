@@ -1,24 +1,51 @@
 ---
-output: html_document
+output: 
+  html_document:
+    code_folding: show
+title: Appalachicola exploration
 ---
-  
-# Appalachicola exploration 
 
-```{r, warning = F, message = F}
-knitr::opts_chunk$set(echo = TRUE, message = F, echo = F, warning = F)
+Below is an exploration of DO and metabolism data from the Cat Point station at Appalachicola, using data from 2006 to 2019.  It incorporates some changes to the WtRegDO package on the sine branch.  Specifically, the `meteval` function was updated to include anomalous estimates by month and changes the required data inputs if using different gas exchanges methods (i.e., air temperature is no longer a requirement if using the Wanninkhof method). 
 
-# library(WtRegDO)
-devtools::load_all('../WtRegDO')
+```{r setup, warning = F, message = F}
+knitr::opts_chunk$set(echo = TRUE, message = F, echo = T, warning = F)
+
+# libraries
 box::use(
+  WtRegDO[ecometab, wtreg, meteval],
   here[...], 
   doParallel[registerDoParallel], 
   parallel[detectCores],
   dplyr[...],
-  SWMPr[import_local, qaqc, comb]
+  tidyr[...],
+  SWMPr[import_local, qaqc, comb], 
+  ggplot2[...], 
+  tibble[enframe], 
+  lubridate[...]
+  )
+
+# base ggplot themef
+thm <- theme_minimal(base_size = 14) + 
+  theme(
+    legend.title = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(), 
+    panel.grid.minor.y = element_blank(), 
+    strip.background = element_blank(), 
+    legend.position = 'top'
   )
 ```
 
-This script imports weather and water quality data for 2006 to 2019, combines, .....
+This code chunk does the following:
+
+1) Imports water quality data from cat point and weather data from east bay.
+1) Combines the files at hourly time step and preps for detiding.
+1) Detides observed DO using window widths from Jill's presentation.
+1) Calculates open water metabolism estimates on observed and detided DO.
+1) Saves the data files use below.
+
+The script is not run in this Rmd file since it takes a while, but it is shown for reproducibility.  
+
 ```{r eval = F}
 # import apacp data, clean up with qaqc
 apacpwq <- import_local(station_code = 'apacpwq', path = here('data/284523.zip'))
@@ -35,7 +62,8 @@ apa <- comb(apacpwq, apaebmet, timestep = 60, method = 'union') %>%
     DO_obs = do_mgl,
     WSpd = wspd,
     BP = bp,
-    Tide = depth
+    Tide = depth,
+    PAR = totpar
   )
 
 # site metadata
@@ -49,6 +77,7 @@ tz <- attr(apa$DateTimeStamp, 'tzone')
 ncores <- detectCores()  
 registerDoParallel(cores = ncores - 1)
 
+# get evalcor results to check sun angle/tidal height correlations
 cordat <- evalcor(apa, tz, lat, long, progress = T, plot = F)
 apa$cordat <- cordat
 apaobs <- apa %>% 
@@ -65,13 +94,261 @@ apadtdeco <- ecometab(apadtd, tz = tz, lat = lat, long = long, DO_var = 'DO_nrm'
 save(apaobs, file = here('data/apaobs.RData'))
 save(apadtd, file = here('data/apadtd.RData'))
 save(apaobseco, file = here('data/apaobseco.RData'))
-save(apadtdeco, file = here('data/apadtseco.RData'))
+save(apadtdeco, file = here('data/apadtdeco.RData'))
 ```
+
+Load the files saved from above.
 
 ```{r}
 load(file = here('data/apaobs.RData'))
 load(file = here('data/apadtd.RData'))
 load(file = here('data/apaobseco.RData'))
-load(file = here('data/apadtseco.RData'))
+load(file = here('data/apadtdeco.RData'))
+```
+
+Evaluate the anomalous estimates using the `meteval` function.  The new output is a list with elements named `cmp` for an assessment of the complete time series and `mos` for an assessment by month.
+
+```{r}
+metevalobs <- meteval(apaobseco)
+metevaldtd <- meteval(apadtdeco)
+metevalobs
+metevaldtd
+```
+
+Compile the complete and monthly results for comparison.
+
+```{r}
+# total anomalies
+anomcmp <- list(
+    'Observed' = metevalobs$cmp,
+    'Detided' = metevaldtd$cmp
+  ) %>% 
+  enframe %>% 
+  unnest('value') %>% 
+  select(matches('name|anom')) %>% 
+  gather('var', 'val', -name) %>% 
+  mutate(var = gsub('anom', '', var))
+
+# monthly anomalies
+anommos <- list(
+    'Observed' = metevalobs$mos,
+    'Detided' = metevaldtd$mos
+  ) %>% 
+  enframe %>% 
+  unnest('value') %>% 
+  select(matches('name|anom|month')) %>% 
+  gather('var', 'val', -name, -month)%>% 
+  mutate(var = gsub('anom', '', var))
+
+anomcmp
+anommos
+```
+
+Make a plot to compare the complete and monthly results by anomalies.
+
+```{r, fig.height = 5, fig.width = 7}
+ggplot(anomcmp, aes(x = var, y = val, fill = name)) + 
+  geom_bar(stat = 'identity',  position = 'dodge', alpha = 0.7) +
+  thm +
+  theme(axis.title.x = element_blank()) + 
+  labs(
+    y = '% anomalies', 
+    subtitle = 'Complete time series'
+  )
+
+ggplot(anommos, aes(x = month, y = val, fill = name)) + 
+  geom_bar(stat = 'identity',  position = 'dodge', alpha = 0.7) +
+  facet_wrap(~var, ncol = 2) +
+  thm +
+  theme(axis.title.x = element_blank()) + 
+  labs(
+    y = '% anomalies', 
+    subtitle = 'By month'
+  )
+```
+
+For fun, let's plot the change in anomalies from observed to detided by month. 
+
+```{r, fig.height = 5, fig.width = 7}
+toplo <- anommos %>% 
+  spread(name, val) %>% 
+  mutate(
+    `Delta anomalies` = Detided - Observed
+  )
+
+ggplot(toplo, aes(x = month, y = `Delta anomalies`)) + 
+  geom_bar(stat = 'identity',  position = 'dodge', alpha = 0.7) +
+  facet_wrap(~var, ncol = 2) +
+  thm +
+  theme(axis.title.x = element_blank()) + 
+  labs( 
+    subtitle = 'By month, anomaly change from observed to detided'
+  )
+```
+
+Compile and summarize observed/detided metabolism results by month.
+
+```{r}
+apaecosum <- list(
+    Observed = apaobseco,
+    Detided = apadtdeco
+  ) %>% 
+  enframe %>% 
+  unnest('value') %>% 
+  mutate(
+    mo = month(Date)
+  ) %>% 
+  select(matches('name|mo|^Pg$|^Rt$')) %>% 
+  gather('var', 'val', -name, -mo) %>% 
+  group_by(name, mo, var) %>% 
+  summarise(
+    ecomean = mean(val, na.rm = T), 
+    ecolo = t.test(val)$conf.int[1],
+    ecohi = t.test(val)$conf.int[2], 
+    .groups = 'drop'
+  )
+apaecosum
+```
+
+Make a plot of the summaries.
+
+```{r, fig.height = 5, fig.width = 7}
+ggplot(apaecosum, aes(x = factor(mo), y = ecomean, color = var)) + 
+  geom_errorbar(aes(ymin = ecolo, ymax = ecohi)) + 
+  geom_point() +
+  facet_wrap(~name) +
+  thm +
+  labs(
+    y = 'mmol/m2/d', 
+    x = NULL, 
+    subtitle = 'Metabolism by month (+/- 95% CI)'
+  )
+```
+ 
+ 
+The summer months are pretty suspect for the detided results.  Looking at the results from the `evalcor` function suggests that this is a bad time for detiding. But then again, so are the winter months...
+
+```{r, fig.height = 5, fig.width = 7}
+toplo <- apaobs %>% 
+  mutate(
+    dy = yday(DateTimeStamp), 
+    yr = year(DateTimeStamp)
+  )
+ggplot(toplo, aes(x = dy, y = cordat, group = yr)) + 
+  geom_line() + 
+  geom_hline(yintercept = 0, col = 'lightblue') +
+  geom_hline(yintercept = 0.25, col = 'tomato1') +
+  geom_hline(yintercept = -0.25, col = 'tomato1') +
+  thm + 
+  theme(
+    panel.grid.major.y = element_blank()
+  ) +
+  labs(
+    x = 'Day of year', 
+    y = 'Sun angle/tidal height correlation'
+  )
+```
+
+We can dig deeper to evaluate associations of production with PAR, both to evaluate differences in detided and observed DO and to understand the potential role of daily PAR intensity with anomalies.  First we summarize PAR on the daily scale to combine with the metabolism estimates.  For the weighted regression results, there's a column called `solar_period` that indicated whether a time step was during the night (`sunset`) or day (`sunrise`).  We filter only the `sunrise` time period, then take the average within each day.
+
+```{r}
+apapar <- apadtd %>% 
+  filter(solar_period == 'sunrise') %>% 
+  mutate(
+    Date = as.Date(DateTimeStamp)
+  ) %>% 
+  group_by(Date) %>% 
+  summarise(
+    `PAR mean` = mean(PAR, na.rm = T), 
+    .groups = 'drop'
+  )
+apapar
+```
+
+A plot of average daily PAR over time.
+
+```{r, fig.height = 2, fig.width = 12}
+ggplot(apapar, aes(x = Date, y = `PAR mean`)) + 
+  geom_line() + 
+  thm + 
+  labs( 
+    x = NULL
+  )
+```
+
+Now we combine with the metabolism observed and detided metabolism estimates.
+
+```{r}
+apaeco <- list(
+    Observed = apaobseco,
+    Detided = apadtdeco
+  ) %>% 
+  enframe %>% 
+  unnest('value') %>% 
+  left_join(apapar, by = 'Date')
+apaeco
+```
+
+Plotting Pg vs PAR mean may be telling.
+
+```{r, fig.height = 4, fig.width = 8}
+ggplot(apaeco, aes(x = `PAR mean`, y = Pg)) + 
+  geom_point(size = 0.5, alpha = 0.6) + 
+  facet_wrap(~ name, ncol = 2) + 
+  thm + 
+  geom_smooth(method = 'lm') +
+  labs(
+    x = 'PAR (mmol/m2)', 
+    y = 'Pg (mmol/m2/d)'
+  )
+```
+
+Another way to look at it is binning the PAR values into categories to see if there's an association of anomalous values with different ranges of PAR.  Below we bin PAR into thirds by the different summary metrics.
+
+```{r}
+toplo <- apaeco %>% 
+  select(name, Date, Pg, `PAR mean`) %>% 
+  filter(!is.na(`PAR mean`)) %>% 
+  mutate(
+    `PAR level` = cut(`PAR mean`, breaks = c(-Inf, quantile(`PAR mean`, c(0.33, 0.66), na.rm = T), Inf), labels = c('lo', 'md', 'hi'))
+  ) %>% 
+  group_by(name, `PAR level`) %>% 
+  summarise(
+    `% anomalies` = 100 * sum(Pg < 0, na.rm = T) / n(), 
+    .groups = 'drop'
+  )
+toplo
+```
+
+And a plot of the results.
+
+```{r, fig.height = 5, fig.width = 7}
+ggplot(toplo, aes(x = `PAR level`, y = `% anomalies`, fill = name)) +
+  geom_bar(stat = 'identity', position = 'dodge', alpha = 0.7) + 
+  thm
+```
+
+And lastly, repeating the analysis by season because of seasonal variation in PAR and metabolic rates.
+
+```{r, fig.height = 8, fig.width = 9}
+toplo <- apaeco %>% 
+  select(name, Date, Pg, `PAR mean`) %>% 
+  filter(!is.na(`PAR mean`)) %>% 
+  mutate(
+    qrt = quarter(Date), 
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('JFM', 'AMJ', 'JAS', 'OND'))
+  ) %>% 
+  mutate(
+    `PAR level` = cut(`PAR mean`, breaks = c(-Inf, quantile(`PAR mean`, c(0.33, 0.66), na.rm = T), Inf), labels = c('lo', 'md', 'hi'))
+  ) %>% 
+  group_by(name, qrt, `PAR level`) %>% 
+  summarise(
+    `% anomalies` = 100 * sum(Pg < 0, na.rm = T) / n(), 
+    .groups = 'drop'
+  )
+ggplot(toplo, aes(x = `PAR level`, y = `% anomalies`, fill = name)) +
+  geom_bar(stat = 'identity', position = 'dodge', alpha = 0.7) + 
+  facet_wrap(~ qrt) +
+  thm
 ```
 

@@ -6,6 +6,8 @@ Comparison of metabolism results from [Fwoxy](https://github.com/jmarriola/fwoxy
 
 Comparison of BASEmetab with Odum metabolism results with 2012 Apalachicola data for different iterations of BASEmetab generated using the scripts 1-5 [here](https://fawda123.github.io/BASEmetab_script/comp_plots).
 
+Exploration of multi-year Appalachicola metabolism estimates with observed and detided DO time series, with focus on role of PAR and tidal harmonics on anomalous values [here](https://fawda123.github.io/BASEmetab_script/appalachicola).
+
 ## R scripts 
 
 * `script1.R` Run stripped down BASEmetab code

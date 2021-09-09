@@ -1,0 +1,227 @@
+---
+output: 
+  html_document
+title: "Diagnostics for evalcor"
+runtime: shiny
+---
+
+```{r setup, warning = F, message = F, echo = F}
+knitr::opts_chunk$set(warning = F, message = F, echo = F)
+
+box::use(
+  here[...], 
+  dplyr[...],
+  tidyr[...],
+  SWMPr[import_local, qaqc, comb], 
+  ggplot2[...], 
+  tibble[enframe], 
+  lubridate[...], 
+  oce[...]
+)
+
+library(patchwork)
+library(WtRegDO)
+library(shiny)
+
+source('R/funcs.R')
+
+data(apaevlcr)
+
+rws <- nrow(apaevlcr)
+
+# base ggplot theme
+thm <- theme_minimal(base_size = 14) + 
+  theme(
+    legend.title = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(), 
+    panel.grid.minor.y = element_blank(), 
+    strip.background = element_blank(), 
+    legend.position = 'top'
+  )
+
+# site metadata
+locs <- SWMPr::stat_locs %>% 
+  filter(station_code == 'apacp')
+lat <- locs$latitude
+long <- locs$longitude
+tz <- attr(apaevlcr$DateTimeStamp, 'tzone')
+```
+
+```{r statics}
+toplo <- apaevlcr %>% 
+  select(DateTimeStamp, cordat, cordatflr) %>% 
+  gather('var', 'cor', -DateTimeStamp) %>% 
+  mutate(
+    var = case_when(
+      var == 'cordat' ~ 'original', 
+      var == 'cordatflr' ~ 'sun angle floored at zero'
+    )
+  )
+
+# evalcorflr comparison
+flrplo <- ggplot(toplo, aes(x = DateTimeStamp, y = cor, color = var)) + 
+  geom_line() +
+  theme_bw() +
+  scale_y_continuous(limits = c(-0.65, 0.65)) +
+  geom_hline(yintercept = 0, col = 'black') +
+  geom_hline(yintercept = 0.25, col = 'grey') +
+  geom_hline(yintercept = -0.25, col = 'grey') +
+  thm +
+  theme(
+    legend.position = 'top', 
+    legend.title = element_blank(),
+    panel.grid.major.y = element_blank()
+  ) + 
+  labs(
+    x = NULL, 
+    y = 'Corr'
+  )
+
+# observed base plot
+toplo <- apaevlcr %>% 
+  select(DateTimeStamp, DO_obs, Tide, cordat) %>% 
+  gather('var', 'val', -DateTimeStamp) %>% 
+  mutate(
+    var = case_when(
+      var == 'DO_obs' ~ 'DO (mg/L)', 
+      var == 'Tide' ~ 'Tide height (m)', 
+      var == 'cordat' ~ 'Corr'
+    )
+  )
+obsbs <- ggplot(toplo, aes(x = DateTimeStamp, y = val)) + 
+  geom_line() +
+  scale_x_datetime(expand = c(0, 0)) +
+  facet_wrap(~var, ncol = 1, scales = 'free_y', strip.position = 'left') +
+  thm +
+  theme(
+    strip.placement = 'outside', 
+    axis.title.y = element_blank()
+    ) +
+  labs(
+    x = NULL, 
+    y = NULL
+  )
+```
+
+```{r reactives}
+# observed plot
+obsplo <- reactive({
+  
+  # input
+  rowsel <- input$rowsel
+
+  toadd <- apaevlcr[rowsel, 'DateTimeStamp']
+  out <- obsbs + 
+    geom_vline(xintercept = toadd, col = 'red')
+  
+  return(out)
+    
+})
+
+# corr value at timestep
+corval <- reactive({
+  
+  # input
+  rowsel <- input$rowsel
+
+  out <- evalcorstp(apaevlcr, rowsel, tz, lat, long, corv = TRUE) %>% 
+    round(2)
+  
+  return(out)
+  
+})
+
+# values that are correlated
+corplo <- reactive({
+  
+  # input
+  rowsel <- input$rowsel
+
+  toadd <- apaevlcr[rowsel, 'DateTimeStamp']
+    
+  vls <- evalcorstp(apaevlcr, rowsel, tz, lat, long, corv = FALSE)
+
+  corv <- cor(vls$tide_angle, vls$sun_angle) %>% 
+    round(2)
+  toplo <- vls %>% 
+    select(DateTimeStamp, Tide, dTide, tide_angle, sun_angle) %>% 
+    gather('var', 'val', -DateTimeStamp) %>% 
+    mutate(
+      var = case_when(
+        var == 'Tide' ~ 'Tide height\n(m)', 
+        var == 'dTide' ~ 'Tide vec\n(dTide/dt)', 
+        var == 'tide_angle' ~ 'Tide vec\n(deg)', 
+        var == 'sun_angle' ~ 'Sun angle\n(deg)'
+      ), 
+      var = factor(var, levels = c('Tide height\n(m)', 'Tide vec\n(dTide/dt)', 'Tide vec\n(deg)', 'Sun angle\n(deg)')) 
+    )
+  
+  p1 <- ggplot(toplo, aes(x = DateTimeStamp, y = val)) + 
+    geom_line() +
+    scale_x_datetime(expand = c(0, 0)) +
+    geom_vline(xintercept = toadd, col = 'red') +
+    facet_wrap(~var, ncol = 1, scales = 'free_y', strip.position = 'left') +
+    thm +
+    theme(
+      strip.placement = 'outside', 
+      axis.title.y = element_blank()
+      ) +
+    labs(
+      x = NULL, 
+      y = NULL
+    )
+  
+  p2 <- ggplot(vls, aes(x = tide_angle, y = sun_angle)) + 
+    geom_point() + 
+    geom_smooth(method = 'lm') +
+    thm + 
+    theme(
+      panel.grid.major.x = element_line()
+    ) +
+    labs(
+      x = 'Tide vec (deg)', 
+      y = 'Sun angle (deg)', 
+      title = paste('Correlation', corv)
+    )
+  
+  out <- p1 + p2 + plot_layout(ncol = 2, widths = c(2, 1))
+  
+  return(out)
+
+})
+
+```
+
+This app is an exploratory tool to understand results of the `evalcor` function from [WtRegDO](https://github.com/fawda123/WtRegDO).  For simplicity, 2012 data from Appalachicola Cat Point station is used.  The data were prepared as described [here](https://fawda123.github.io/BASEmetab_script/appalachicola).  
+
+# {.tabset .tabset-pills}
+
+## `evalcor` diagnostics
+
+```{r}
+sliderInput('rowsel', 'Select observation', min = 1, max = rws, step = 1, value = 6000, width = '100%')
+```
+
+Output from `evalcor` and observed values for the time series.
+
+```{r}
+output$obsplo <- renderPlot(obsplo())
+plotOutput('obsplo', width = '100%', height = '350px')
+```
+
+Values correlated for `evalcor`(correlation  `r renderText(corval())`) 
+
+```{r}
+output$corplo <- renderPlot(corplo())
+plotOutput('corplo', width = '100%', height = '350px')
+```
+
+## Comparing results with floored sun angle
+
+This simple plot shows results from the standard `evalcor` function and a modified version that floors the sun angle estimate at zero (i.e., values below the horizone are treated as zero/no solar radiation to stimulate production).
+
+```{r, fig.height = 4, fig.width = 9, out.width = '100%'}
+print(flrplo)
+```
+

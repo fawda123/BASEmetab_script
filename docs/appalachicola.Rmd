@@ -242,7 +242,7 @@ toplo <- apaobs %>%
     dy = yday(DateTimeStamp), 
     yr = year(DateTimeStamp)
   )
-ggplot(toplo, aes(x = dy, y = cordat, group = yr)) + 
+ggplot(toplo, aes(x = dy, y = cordat)) + 
   geom_line() + 
   geom_hline(yintercept = 0, col = 'lightblue') +
   geom_hline(yintercept = 0.25, col = 'tomato1') +
@@ -267,7 +267,7 @@ apapar <- apadtd %>%
   ) %>% 
   group_by(Date) %>% 
   summarise(
-    `PAR mean` = mean(PAR, na.rm = T), 
+    `PAR mean` = mean(PAR, na.rm = T) * day_hrs * 4, # convert PAR to mmol/m2/d (hourly obs is mmol/m2/0.25hr, so x 4 x day hours) 
     .groups = 'drop'
   )
 apapar
@@ -280,7 +280,8 @@ ggplot(apapar, aes(x = Date, y = `PAR mean`)) +
   geom_line() + 
   thm + 
   labs( 
-    x = NULL
+    x = NULL, 
+    y = 'PAR (mmol/m2/d)'
   )
 ```
 
@@ -306,7 +307,7 @@ ggplot(apaeco, aes(x = `PAR mean`, y = Pg)) +
   thm + 
   geom_smooth(method = 'lm') +
   labs(
-    x = 'PAR (mmol/m2)', 
+    x = 'PAR (mmol/m2/d)', 
     y = 'Pg (mmol/m2/d)'
   )
 ```

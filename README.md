@@ -2,7 +2,7 @@
 
 Modification of materials for running BASEmetab.  All content derived from the original repository [here](https://github.com/dgiling/BASEmetab).
 
-Comparison of metabolism results from [Fwoxy](https://github.com/jmarriola/fwoxy), [Odum](https://github.com/fawda123/WtRegDO), and BASEmetab using Fwoxy estimated DO [here](https://fawda123.github.io/BASEmetab_script/fwoxy_comp).
+Comparison of metabolism results from [Fwoxy](https://github.com/jmarriola/fwoxy), [Odum](https://github.com/fawda123/WtRegDO), BASEmetab, and [EBASE](https://github.com/fawda123/EBASE) using Fwoxy estimated DO [here](https://fawda123.github.io/BASEmetab_script/fwoxy_comp).
 
 Comparison of BASEmetab with Odum metabolism results with 2012 Apalachicola data for different iterations of BASEmetab generated using the scripts 1-5 [here](https://fawda123.github.io/BASEmetab_script/comp_plots).
 

@@ -4,7 +4,7 @@ output: html_document
 
 # Forward model comparison 
 
-This document provides code and analysis to compare metabolism results from the Odum open-water method and BASEmetab with known results from the forward model included in the [Fwoxy package](https://github.com/jmarriola/fwoxy).  The Odum open-water method is available from the [sine branch](https://github.com/fawda123/WtRegDO/tree/sine) of the WtRegDO package, which includes a new option to output instantaneous metabolism flux estimates at each time step.  The BASEmetab results were created using [this script](https://github.com/fawda123/BASEmetab_script/blob/master/R/fwoxy_basemetab.R).  For BASEmetab, the reaeration coefficient was determined using the Wanninkhof method with the constant forcings from the Fwoxy model.  Also note that the BASEmetab model requires a PAR time series, which was created using the `fun_par_sin_model` from Fwoxy.  
+This document provides code and analysis to compare metabolism results from the Odum open-water method, BASEmetab, and EBASE with known results from the forward model included in the [Fwoxy package](https://github.com/jmarriola/fwoxy).  The Odum open-water method is available from the [sine branch](https://github.com/fawda123/WtRegDO/tree/sine) of the WtRegDO package, which includes a new option to output instantaneous metabolism flux estimates at each time step.  The BASEmetab results were created using [this script](https://github.com/fawda123/BASEmetab_script/blob/master/R/fwoxy_basemetab.R).  For BASEmetab, the reaeration coefficient was determined using the Wanninkhof method with the constant forcings from the Fwoxy model.  Also note that the BASEmetab model requires a PAR time series, which was created using the `fun_par_sin_model` from Fwoxy.  The EBASE results were created using [this script](https://github.com/fawda123/BASEmetab_script/blob/master/R/fwoxy_basemetab.R) and is similer to BASEmetab with the exception of a parameterization for gas exchange following Wanninkhof 2014, i.e., gas exchange is estimated directly in the model and not calculated empirically outside of the Bayesian context.   
 
 ```{r setup, include = FALSE, warning = F, message = F, echo = T}
 knitr::opts_chunk$set(echo = TRUE, message = F, echo = T, warning = F, fig.height = 6, fig.width = 8)
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, message = F, echo = T, warning = F, fig.heigh
 
 ## Setup and analysis
 
-Load the libraries, BASEmetab results, and setup model parameters and constants for the simulated dissolved oxygen time series from Fwoxy.
+Load the libraries, BASEmetab results, EBASE results, and setup model parameters and constants for the simulated dissolved oxygen time series from Fwoxy.
 
 ```{r}
 library(fwoxy)
@@ -22,6 +22,7 @@ library(WtRegDO)
 library(here)
 
 load(file = here('data/fwoxybasemetab.RData'))
+load(file = here('data/fwoxyebase.RData'))
 
 # plot colors
 colors <- c(gasexd = "red3", gppd = "orange", erd = "purple4", dcdtd = "steelblue3")
@@ -80,7 +81,7 @@ head(opmetab)
 
 ## Comparison
 
-The metabolic output from WtRegDO, BASEmetab, and Fwoxy are then combined for a direct comparison. This requires a bit of additional wrangling, the details of which are not important.  The output shows the combined time series used to create the comparison plots. 
+The metabolic output from WtRegDO, BASEmetab, EBASE, and Fwoxy are then combined for a direct comparison. This requires a bit of additional wrangling, the details of which are not important.  The output shows the combined time series used to create the comparison plots. 
 
 ```{r}
 # function to make seconds in opmetab match fwoxy
@@ -117,6 +118,16 @@ bsmetab <- fwoxybasemetab %>%
   gather(var, val, -secs, -typ) %>% 
   na.omit()
 
+# format EBASE to match fwoxy
+ebmetab <- fwoxyebase %>%
+  mutate(
+    secs = getsec(DateTimeStamp), 
+    typ = 'EBASE'
+  ) %>% 
+  select(secs, typ, Pg_vol, Rt_vol, D, dDO) %>% 
+  gather(var, val, -secs, -typ) %>% 
+  na.omit()
+
 # combine fwoxy and opmetab
 toplo1 <- example %>%
   select(
@@ -130,10 +141,10 @@ toplo1 <- example %>%
     typ = 'Fwoxy'
   ) %>% 
   gather(var, val, -secs, -typ) %>% 
-  bind_rows(opmetab, bsmetab) %>% 
+  bind_rows(opmetab, bsmetab, ebmetab) %>% 
   mutate(
     var = factor(var, levels = c('D', 'Pg_vol', 'Rt_vol', 'dDO'), labels = c('gasexd', 'gppd', 'erd', 'dcdtd')), 
-    typ = factor(typ, levels = c('Fwoxy', 'Odum', 'BASEmetab'))
+    typ = factor(typ, levels = c('Fwoxy', 'Odum', 'BASEmetab', 'EBASE'))
   )
 
 head(toplo1)
@@ -166,6 +177,7 @@ toplo2 <- toplo1 %>%
 ggplot(toplo2, aes(x = Fwoxy, y = Odum, color = var)) + 
   geom_point() +
   facet_wrap(~var, ncol = 2, scales = 'free') +
+  # coord_equal() + 
   scale_color_manual(values = colors) + 
   theme_bw() + 
   geom_abline(intercept = 0, slope = 1) +
@@ -198,6 +210,25 @@ The same comparison as above is made for the BASEmetab results with Fwoxy.
   )
 ```
 
+The same comparison as above is made for the EBASE results with Fwoxy. 
+
+```{r}
+ ggplot(toplo2, aes(x = Fwoxy, y = EBASE, color = var)) + 
+  geom_point() +
+  facet_wrap(~var, ncol = 2, scales = 'free') +
+  scale_color_manual(values = colors) + 
+  theme_bw() + 
+  geom_abline(intercept = 0, slope = 1) +
+  labs(
+    y = 'EBASE, Flux, mmol/m3/d', 
+    x = 'Fwoxy, Flux, mmol/m3/d'
+  ) +
+  theme(
+    legend.title = element_blank(), 
+    strip.background = element_blank()
+  )
+```
+
 This shows a direct comparison between the methods for each metabolic result as time series.
 
 ```{r}
@@ -218,4 +249,4 @@ ggplot(toplo1, aes(x = secs, y = val, color = typ)) +
 
 ## Summary
 
-All methods produce similar results for the instantaneous metabolic estimates.  Slight differences between the Odum and Fwoxy results relate to how the time series is divided to estimate the rates in the WtRegDO package.  Specifically, the Odum method uses the metabolic day, whereas the Fwoxy approach uses a fixed day.  Additionally, the Odum method calculates rates based on the midpoint difference of DO between two time steps.  This creates a slight phase offset between the methods.  The BASEmetab results are more similar to the Fwoxy results than the Odum results.  However, the difference between respiration estimates for BASEmetab and Fwoxy are larger smaller than those for Odum and Fwoxy.  These are minor differences that are probably not worth addressing. 
+All methods produce similar results for the instantaneous metabolic estimates, although EBASE over-estimates gas exchange and under-estimates respiration.  Slight differences between the Odum and Fwoxy results relate to how the time series is divided to estimate the rates in the WtRegDO package.  Specifically, the Odum method uses the metabolic day, whereas the Fwoxy approach uses a fixed day.  Additionally, the Odum method calculates rates based on the midpoint difference of DO between two time steps.  This creates a slight phase offset between the methods.  The BASEmetab results are more similar to the Fwoxy results than the Odum results.  However, the difference between respiration estimates for BASEmetab and Fwoxy are larger smaller than those for Odum and Fwoxy.  These are minor differences that are probably not worth addressing. 

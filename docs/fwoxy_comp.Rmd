@@ -250,3 +250,38 @@ ggplot(toplo1, aes(x = secs, y = val, color = typ)) +
 ## Summary
 
 All methods produce similar results for the instantaneous metabolic estimates, although EBASE over-estimates gas exchange and under-estimates respiration.  Slight differences between the Odum and Fwoxy results relate to how the time series is divided to estimate the rates in the WtRegDO package.  Specifically, the Odum method uses the metabolic day, whereas the Fwoxy approach uses a fixed day.  Additionally, the Odum method calculates rates based on the midpoint difference of DO between two time steps.  This creates a slight phase offset between the methods.  The BASEmetab results are more similar to the Fwoxy results than the Odum results.  However, the difference between respiration estimates for BASEmetab and Fwoxy are larger smaller than those for Odum and Fwoxy.  These are minor differences that are probably not worth addressing. 
+
+For EBASE, we can compare the individual parameter estimates from values used to create the Fwoxy input.  The `a` parameter is light efficiency and was set at 0.2 mmol/m3/hr in the initial Fwoxy input. The estimate from EBASE is:
+
+```{r}
+ats <- fwoxyebase %>% 
+  pull(ats) %>% 
+  unique %>% 
+  mean()
+ats
+```
+
+The value is an instantaneous measure at mmol/m3/15min.  To convert to mmol/m3/day, we multiply by 86400 / 900.
+
+```{r}
+ats * 86400 / 900
+```
+
+This is very close to the input used for Fwoxy. A second parameter output from Fwoxy is `b` as part of the gas exchange estimate.  A reasonable estimate for this value is 0.251 hr/cm.  The estimate from EBASE is: 
+
+```{r}
+bts <- fwoxyebase %>% 
+  pull(bts) %>% 
+  unique %>% 
+  mean()
+bts
+```
+
+The value is an instantaneous measure at 15min/m. To convert to hr/cm, we multiply by 100 / 4 (or 25).
+
+```{r}
+bts * 25
+```
+
+This is about half of what it should be, which is expected given that the gas exchange was over-estimated for EBASE.
+

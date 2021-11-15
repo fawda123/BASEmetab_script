@@ -8,17 +8,21 @@ Comparison of BASEmetab with Odum metabolism results with 2012 Apalachicola data
 
 ## R scripts 
 
-* `script1.R` Run stripped down BASEmetab code
+* `script1.R` Run stripped down BASEmetab code with 2012 Appalachicola data
 
-* `script2.R` Run BASEmetab using the original package
+* `script2.R` Run BASEmetab using the original package with 2012 Appalachicola data
 
-* `script3.R` Run stripped down BASEmetab code with instantaneous K
+* `script3.R` Run stripped down BASEmetab code with instantaneous K with 2012 Appalachicola data
 
-* `script4.R` Run stripped down BASEmetab code with instantaneous K and metabolic day
+* `script4.R` Run stripped down BASEmetab code with instantaneous K and metabolic day with 2012 Appalachicola data
 
-* `script5.R` Run stripped down BASEmetab code with instantaneous K, metabolic day, p and theta estimated
+* `script5.R` Run stripped down BASEmetab code with instantaneous K, metabolic day, p and theta estimated with 2012 Appalachicola data
+
+* `script6.R` Run EBASE with with 2012 Appalachicola data
 
 * `fwoxy_basemetab.R` Use [Fwoxy](https://github.com/jmarriola/fwoxy) estimated DO to estimate metabolism flux rates with BASEmetab, as in `script5.R`
+
+* `fwoxy_ebase.R` Use [Fwoxy](https://github.com/jmarriola/fwoxy) estimated DO to estimate metabolism flux rates with EBASE, as in `script6.R`
 
 * `method_comp.R` Comparisons of Odum and BASEmetab methods for the different attempts
 

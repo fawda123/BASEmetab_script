@@ -146,8 +146,8 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('inter
 
 stopCluster(cl)
 
-# correct instantanous obs to daily, g to mmol
-outputebase <- do.call('rbind', output) %>% 
+# correct instantanous obs to daily rates
+resall <- do.call('rbind', output) %>% 
   na.omit() %>% 
   unite(DateTimeStamp, c('Date', 'Time'), sep = '_') %>% 
   mutate(
@@ -156,6 +156,26 @@ outputebase <- do.call('rbind', output) %>%
     Rt_vol = erts * (86400 / interval), # O2 mmol/m3/d
     D = -1 * gets * (86400 / interval), # O2 mmol/m3/d
     dDO = dDO * (86400 / interval) # O2 mmol/m3/d
+  )
+
+depth <- 1.852841
+
+# summarize daily estimates, get NEM, convert to O2 to g/m3/d
+outputebase <- resall %>% 
+  mutate(
+    Date = as.Date(DateTimeStamp)
+  ) %>% 
+  group_by(Date) %>% 
+  summarise(
+    GPP = mean(Pg_vol), 
+    ER = mean(Rt_vol), 
+    .groups = 'drop'
+  ) %>% 
+  mutate(
+    NEP = GPP - ER,
+    NEP = NEP * 0.032, 
+    GPP = GPP * 0.032, 
+    ER = ER * 0.032
   )
 
 save(outputebase, file = here('data/outputebase.RData'))

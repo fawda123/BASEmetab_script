@@ -26,14 +26,14 @@
       DO.modelled[i+1] <- DO.modelled[i] 
         + a * PAR[i]
         - r
-        + (1 / H[i]) * (b * U10[i] * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
+        + (1 / H[i]) * (b * pow(U10[i], 2) * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
       
       # posterior predictive assessment nodes #
       ats[i] <- a
       bts[i] <- b
       gppts[i] <- a * PAR[i]
       erts[i] <- r
-      gets[i] <- (1 / H[i]) * (b * U10[i] * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
+      gets[i] <- (1 / H[i]) * (b * pow(U10[i], 2) * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
       
     }
     

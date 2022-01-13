@@ -18,11 +18,10 @@ APNERR2012 <- read.csv('data/APNERR2012.csv') %>%
     BP = BP / 1013 # mb to atm
   ) %>% 
   separate(DateTimeStamp, c('Date', 'Time'), sep = ' ') %>% 
-  select(Date, Time, I = totpar, tempC = ATemp, DO.meas = DO_obs, atmo.pressure = BP, salinity = Sal, WSpd) %>% 
+  select(Date, Time, I = totpar, tempC = Temp, DO.meas = DO_obs, atmo.pressure = BP, salinity = Sal, WSpd) %>% 
   fill(atmo.pressure, tempC)
 
 save(APNERR2012, file = 'data/APNERR2012.RData', compress = 'xz')
-
 
 # format 2012 AP data for use with BASEmetab, optimal detided -------------
 

@@ -6,16 +6,29 @@
     # PRIORS
   
     # set priors
-    a ~ dnorm(0,0.25)T(0,)
-    r ~ dnorm(0,0.25)T(0,)	
-    b ~ dnorm(0,0.25)T(0,)
+    amean <- 0.2 / troc
+    asd <- 0.01 * amean
+    atau <- 1 / (asd * asd)
+    rmean <- 20 / troc
+    rsd <- 1.341 * rmean
+    rtau <- 1 / (rsd * rsd)
+    bmean <- 0.251 / 400
+    bsd <- 1.341 * bmean
+    btau <- 1 / (bsd * bsd)
     
-    tau~dgamma(1,0.001)
+    a ~ dunif(0 * amean, 2 * amean)
+    r ~ dnorm(0, 0.01)T(0,)
+    b ~ dunif(0.8 * bmean, 1.2 * bmean)
+    # a ~ dnorm(amean, atau)
+    # r ~ dnorm(rmean, rtau)
+    # b ~ dnorm(bmean, btau)
+    
+    tau ~ dgamma(1,0.001)
     
     #--------
-    
-    # model
 
+    # model
+    
     # DO modelled
     zz ~ dnorm(0,1000000)
     DO.modelled[1] <- DO.meas[1] + zz # make monitorable
@@ -24,12 +37,12 @@
       
       DO.meas[i+1] ~ dnorm(DO.modelled[i+1], tau)
       DO.modelled[i+1] <- DO.modelled[i] 
-        + a * PAR[i]
-        - r
-        + (1 / H[i]) * (b * pow(U10[i], 2) * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
+        + a * PAR[i] 
+        - r 
+        - (1 / H[i]) * (-b * pow(U10[i], 2) * pow(sc[i] / 600, -0.5) * (DO.sat[i]-DO.modelled[i]))
       
       # posterior predictive assessment nodes #
-      ats[i] <- a
+      ats[i] <- a 
       bts[i] <- b
       gppts[i] <- a * PAR[i]
       erts[i] <- r

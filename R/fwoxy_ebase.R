@@ -29,6 +29,7 @@ example <- fwoxy(oxy_ic = oxy_ic, a_param = a_param, er_param = er_param,
 
 # number of seconds between observations
 interval <- 900
+troc <- 86400 / interval
 
 # number of MCMC iterations 
 n.iter <- 10000
@@ -67,7 +68,7 @@ dates <- unique(data$Date)
 
 # evaluate dates with complete record
 n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
-dates <- dates[n.records == (86400/interval)] # select only dates with full days
+dates <- dates[n.records == troc] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
 
@@ -80,7 +81,7 @@ registerDoParallel(cl)
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('interval')) %dopar% { 
+output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = 'troc') %dopar% { 
   
   sink(here('log.txt'))
   cat('Log entry time', as.character(Sys.time()), '\n')
@@ -103,8 +104,9 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('inter
   inits <- NULL
   # inits <- function(){
   #   list(
-  #     A = A.init,
-  #     R = R.init / (86400 / interval)
+  #     a = 0.2 / troc,
+  #     r = 20 / troc,
+  #     b = 0.251 / 400
   #   )
   # }
   
@@ -115,7 +117,7 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('inter
   # Set 
   n.chains <- 3
   n.thin <- 10
-  data.list <- list("num.measurements", "interval", "DO.meas", "PAR", "DO.sat", "sc", "H", "U10")
+  data.list <- list("num.measurements", "troc", "DO.meas", "PAR", "DO.sat", "sc", "H", "U10")
   
   # Define monitoring variables (returned by jags)
   params <- c("ats", "bts", "gppts", "erts", "gets", "DO.modelled")
@@ -140,12 +142,12 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('inter
                        DO.meas = data.sub$DO.meas,
                        DO.modelled = metabfit$BUGSoutput$mean$DO.modelled,
                        Time = data.sub$Time,
-                       ats = c(NA, metabfit$BUGSoutput$mean$ats), 
-                       bts = c(NA, metabfit$BUGSoutput$mean$bts),
-                       gppts = c(NA, metabfit$BUGSoutput$mean$gppts), # O2, mmol/m3/15 min
-                       erts = c(NA, metabfit$BUGSoutput$mean$erts), # O2, mmol/m3/15 min 
-                       gets = c(NA, metabfit$BUGSoutput$mean$gets), # O2, mmol/m3/15 min
-                       dDO = c(NA, diff(metabfit$BUGSoutput$mean$DO.modelled)) # O2 mmol/m3/15 min
+                       ats = c(NA, metabfit$BUGSoutput$mean$ats), # (mmol/m3/ts)/(W/m2)
+                       bts = c(NA, metabfit$BUGSoutput$mean$bts), # ts/m
+                       gppts = c(NA, metabfit$BUGSoutput$mean$gppts), # O2, mmol/m3/ts
+                       erts = c(NA, metabfit$BUGSoutput$mean$erts), # O2, mmol/m3/ts 
+                       gets = c(NA, metabfit$BUGSoutput$mean$gets), # O2, mmol/m3/ts
+                       dDO = c(NA, diff(metabfit$BUGSoutput$mean$DO.modelled)) # O2 mmol/m3/ts
                        
   )
   
@@ -155,16 +157,19 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = c('inter
 
 stopCluster(cl)
 
-# correct instantanous obs to daily, g to mmol
+# correct instantaneous obs to daily, g to mmol
 fwoxyebase <- do.call('rbind', output) %>% 
   na.omit() %>% 
   unite(DateTimeStamp, c('Date', 'Time'), sep = '_') %>% 
   mutate(
     DateTimeStamp = lubridate::ymd_hms(DateTimeStamp, tz = 'America/Jamaica'),
-    Pg_vol = gppts * (86400 / interval), # O2 mmol/m3/d
-    Rt_vol = erts * (86400 / interval), # O2 mmol/m3/d
-    D = -1 * gets * (86400 / interval), # O2 mmol/m3/d
-    dDO = dDO * (86400 / interval) # O2 mmol/m3/d
-  )
+    a = ats * troc, # (mmol/m3/ts)/(W/m2) to (mmol/m3/d)/(W/m2)
+    b = bts * 100 * 3600 / interval, # ts/m to hr/cm 
+    Pg_vol = gppts * troc, # O2 mmol/m3/ts to O2 mmol/m3/d
+    Rt_vol = erts * troc, # O2 mmol/m3/ts to O2 mmol/m3/d
+    D = -1 * gets * troc, #  # O2 mmol/m3/ts to O2 mmol/m3/d
+    dDO = dDO * troc #  # O2 mmol/m3/ts to O2 mmol/m3/d
+  ) %>% 
+  select(-ats, -bts, -gppts, -erts, -gets)
 
 save(fwoxyebase, file = here('data/fwoxyebase.RData'))

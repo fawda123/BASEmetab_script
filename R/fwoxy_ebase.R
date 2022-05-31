@@ -29,7 +29,7 @@ example <- fwoxy(oxy_ic = oxy_ic, a_param = a_param, er_param = er_param,
 
 # number of seconds between observations
 interval <- 900
-troc <- 86400 / interval
+nstepd <- 86400 / interval
 
 # number of MCMC iterations 
 n.iter <- 10000
@@ -68,7 +68,7 @@ dates <- unique(data$Date)
 
 # evaluate dates with complete record
 n.records <- tapply(data$Date, INDEX=data$Date, FUN=length)
-dates <- dates[n.records == troc] # select only dates with full days
+dates <- dates[n.records == nstepd] # select only dates with full days
 
 # iterate through each date to estimate metabolism ------------------------
 
@@ -81,7 +81,7 @@ registerDoParallel(cl)
 strt <- Sys.time()
 
 # process
-output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = 'troc') %dopar% { 
+output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = 'nstepd') %dopar% { 
   
   sink(here('log.txt'))
   cat('Log entry time', as.character(Sys.time()), '\n')
@@ -104,8 +104,8 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = 'troc') 
   inits <- NULL
   # inits <- function(){
   #   list(
-  #     a = 0.2 / troc,
-  #     r = 20 / troc,
+  #     a = 0.2 / nstepd,
+  #     r = 20 / nstepd,
   #     b = 0.251 / 400
   #   )
   # }
@@ -117,7 +117,7 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags'), .export = 'troc') 
   # Set 
   n.chains <- 3
   n.thin <- 10
-  data.list <- list("num.measurements", "troc", "DO.meas", "PAR", "DO.sat", "sc", "H", "U10")
+  data.list <- list("num.measurements", "nstepd", "DO.meas", "PAR", "DO.sat", "sc", "H", "U10")
   
   # Define monitoring variables (returned by jags)
   params <- c("ats", "bts", "gppts", "erts", "gets", "DO.modelled")
@@ -163,12 +163,12 @@ fwoxyebase <- do.call('rbind', output) %>%
   unite(DateTimeStamp, c('Date', 'Time'), sep = '_') %>% 
   mutate(
     DateTimeStamp = lubridate::ymd_hms(DateTimeStamp, tz = 'America/Jamaica'),
-    a = ats * troc, # (mmol/m3/ts)/(W/m2) to (mmol/m3/d)/(W/m2)
-    b = bts * 100 * 3600 / interval, # ts/m to hr/cm 
-    Pg_vol = gppts * troc, # O2 mmol/m3/ts to O2 mmol/m3/d
-    Rt_vol = erts * troc, # O2 mmol/m3/ts to O2 mmol/m3/d
-    D = -1 * gets * troc, #  # O2 mmol/m3/ts to O2 mmol/m3/d
-    dDO = dDO * troc #  # O2 mmol/m3/ts to O2 mmol/m3/d
+    a = ats * nstepd, # (mmol/m3/ts)/(W/m2) to (mmol/m3/d)/(W/m2)
+    b = bts * 100 * 3600 / interval, # (m/d)/(m2/s2) to (cm/hr)/(m2/s2) 
+    Pg_vol = gppts * nstepd, # O2 mmol/m3/ts to O2 mmol/m3/d
+    Rt_vol = erts * nstepd, # O2 mmol/m3/ts to O2 mmol/m3/d
+    D = -1 * gets * nstepd, #  # O2 mmol/m3/ts to O2 mmol/m3/d
+    dDO = dDO * nstepd #  # O2 mmol/m3/ts to O2 mmol/m3/d
   ) %>% 
   select(-ats, -bts, -gppts, -erts, -gets)
 

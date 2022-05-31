@@ -261,7 +261,7 @@ a <- fwoxyebase %>%
 a
 ```
 
-This is very close to the input used for Fwoxy. A second parameter output from Fwoxy is `b` as part of the gas exchange estimate.  A reasonable estimate for this value is 0.251 hr/cm.  The estimate from EBASE is: 
+This is very close to the input used for Fwoxy. A second parameter output from Fwoxy is `b` as part of the gas exchange estimate.  A reasonable estimate for this value is 0.251 (cm/hr)/(m2/s2).  The estimate from EBASE is: 
 
 ```{r}
 b <- fwoxyebase %>% 

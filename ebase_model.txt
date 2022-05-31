@@ -6,10 +6,10 @@
     # PRIORS
   
     # set priors
-    amean <- 0.2 / troc
+    amean <- 0.2 / nstepd
     asd <- 0.01 * amean
     atau <- 1 / (asd * asd)
-    rmean <- 20 / troc
+    rmean <- 20 / nstepd
     rsd <- 1.341 * rmean
     rtau <- 1 / (rsd * rsd)
     bmean <- 0.251 / 400

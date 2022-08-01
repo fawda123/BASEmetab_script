@@ -45,7 +45,7 @@ ul.task-list{list-style: none;}
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">EBASE vs Odum metabolism estimates</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source" data-quarto-source-url="repo"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">EBASE vs Odum metabolism estimates</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source" data-quarto-source-url="https://github.com/fawda123/BASEmetab_script/blob/master/R/ebasevodum.R"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -71,10 +71,17 @@ ul.task-list{list-style: none;}
 
 </header>
 
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>The following shows results comparing metabolic estimates obtained from the EBASE and Odum models. The EBASE model was run using the <a href="https://fawda123.github.io/EBASE">EBASE</a> R packages and the Odum model was run using the <code>ecometab</code> function from the <a href="https://github.com/fawda123/WtRegDO">WtRegDO</a> R package.</p>
+<p>All models were run using the observed dissolved oxygen time series for data from 2012 at Apalachicola NERR. The EBASE model was set to optimize the parameter equation over a seven day period. Both models used the Wanninkhof equation to estimate the gas exchange. The source code used to create the models and all figures below is in the link above.</p>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="images/gasexts.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Continuous time series of gas excchange comparing results from the EBASE and Odum models. Each panel is one month."><img src="images/gasexts.jpg" title="fig:" class="img-fluid figure-img"></a></p>
-<p></p><figcaption class="figure-caption">Continuous time series of gas excchange comparing results from the EBASE and Odum models. Each panel is one month.</figcaption><p></p>
+<p><a href="images/gasexts.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Continuous time series of gas exchange comparing results from the EBASE and Odum models. Each panel is one month."><img src="images/gasexts.jpg" title="fig:" class="img-fluid figure-img"></a></p>
+<p></p><figcaption class="figure-caption">Continuous time series of gas exchange comparing results from the EBASE and Odum models. Each panel is one month.</figcaption><p></p>
 </figure>
 </div>
 <div class="quarto-figure quarto-figure-center">
@@ -101,6 +108,7 @@ ul.task-list{list-style: none;}
 <p></p><figcaption class="figure-caption">Hourly estimates of all metabolic parameters from the EBASE and Odum models, separated by seasonal quarter and parameter.</figcaption><p></p>
 </figure>
 </div>
+</section>
 
 </main>
 <!-- /main column -->
@@ -253,7 +261,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","loop":true,"openEffect":"zoom","closeEffect":"zoom","descPosition":"bottom"});</script>
+<script>var lightboxQuarto = GLightbox({"selector":".lightbox","closeEffect":"zoom","openEffect":"zoom","loop":true,"descPosition":"bottom"});</script>
 
 
 

@@ -4,12 +4,11 @@ author:
    - name: Dr. Marcus Beck, <mbeck@tbep.org>
 institute: "Tampa Bay Estuary Program"
 date: "08/02/2022"
-repo-url: https://github.com/fawda123/BASEmetab_script/R/ebasevodum.R
 format:
   html:
     theme: cosmo
     code-tools: 
-      source: repo
+      source: https://github.com/fawda123/BASEmetab_script/blob/master/R/ebasevodum.R
 execute:
   echo: true
   warning: false
@@ -25,7 +24,15 @@ library(knitr)
 library(here)
 ```
 
-![Continuous time series of gas excchange comparing results from the EBASE and Odum models. Each panel is one month.](images/gasexts.jpg)
+## Summary
+
+The following shows results comparing metabolic estimates obtained from the EBASE and Odum models.  The EBASE model was run using the [EBASE](https://fawda123.github.io/EBASE) R packages and the Odum model was run using the `ecometab` function from the [WtRegDO](https://github.com/fawda123/WtRegDO) R package.  
+
+All models were run using the observed dissolved oxygen time series for data from 2012 at Apalachicola NERR.  The EBASE model was set to optimize the parameter equation over a seven day period. Both models used the Wanninkhof equation to estimate the gas exchange. The source code used to create the models and all figures below is in the link above. 
+
+## Results
+
+![Continuous time series of gas exchange comparing results from the EBASE and Odum models. Each panel is one month.](images/gasexts.jpg)
 
 ![A direct comparison of gas exchange estimates from the EBASE and Odum models. The 1:1 line is dotted and the regression line is solid. The R-squared values for each regression are shown at the top next to the month.](images/gasexcmp.jpg)
 

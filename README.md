@@ -6,6 +6,8 @@ Comparison of metabolism results from [Fwoxy](https://github.com/jmarriola/fwoxy
 
 Comparison of BASEmetab, EBASE, and Odum metabolism results with 2012 Apalachicola generated using the scripts 1-6 [here](https://fawda123.github.io/BASEmetab_script/comp_plots).
 
+Comparison of EBASE and Odum metabolism results with 2012 Apalachicola data, observed dissolved oxygen, [here](https://fawda123.github.io/BASEmetab_script/ebasevodum).
+
 ## R scripts 
 
 * `script1.R` Run stripped down BASEmetab code with 2012 Appalachicola data

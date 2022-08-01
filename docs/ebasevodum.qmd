@@ -36,7 +36,7 @@ All models were run using the observed dissolved oxygen time series for data fro
 
 ![A direct comparison of gas exchange estimates from the EBASE and Odum models. The 1:1 line is dotted and the regression line is solid. The R-squared values for each regression are shown at the top next to the month.](images/gasexcmp.jpg)
 
-![Continuous time series of all metabolic parameters from the EBASE and Odum models. Each point is a weekly average of all continuos estimates. The R-squared values for the regressions between results for each model are shown at the top next to the parameter labels.](images/weeklyts.jpg)
+![Continuous time series of all metabolic parameters from the EBASE and Odum models. Each point is a weekly average of all continuous estimates. The R-squared values for the regressions between results for each model are shown at the top next to the parameter labels.](images/weeklyts.jpg)
 
 ![A direct comparison of the metabolic parameters from the EBASE and Odum models. Each point is a weekly average of all continuous estimates. The 1:1 line is dotted and the regression line is solid. The R-squared values for each regression are shown at the top next to the month.](images/weeklycmp.jpg)
 

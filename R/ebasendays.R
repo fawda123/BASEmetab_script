@@ -47,7 +47,7 @@ for(i in 1:stps){
 }
 
 ebasendays1 <- out1
-save(ebasendays1, file = 'data/ebasendasy1.RDAta')
+save(ebasendays1, file = 'data/ebasendays1.RDAta')
 
 # summer --------------------------------------------------------------------------------------
 
@@ -67,4 +67,4 @@ for(i in 1:stps){
 }
 
 ebasendays2 <- out2
-save(ebasendays2, file = 'data/ebasendasy2.RDAta')
+save(ebasendays2, file = 'data/ebasendays2.RDAta')

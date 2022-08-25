@@ -8,6 +8,8 @@ Comparison of BASEmetab, EBASE, and Odum metabolism results with 2012 Apalachico
 
 Comparison of EBASE and Odum metabolism results with 2012 Apalachicola data, observed dissolved oxygen, [here](https://fawda123.github.io/BASEmetab_script/ebasevodum).
 
+Comparison of model optimization length for EBASE with 2012 Apalachicola data, observed dissolved oxygen, [here](ebasendays)
+
 ## R scripts 
 
 * `script1.R` Run stripped down BASEmetab code with 2012 Appalachicola data

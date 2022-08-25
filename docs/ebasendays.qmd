@@ -1,0 +1,208 @@
+---
+title: "EBASE optimization length evaluation"
+author: 
+  - name: Dr. Marcus Beck, <mbeck@tbep.org>
+institute: "Tampa Bay Estuary Program"
+date: "08/25/2022"
+format:
+  html:
+    theme: cosmo
+    code-tools: 
+      source: https://github.com/fawda123/BASEmetab_script/blob/master/R/ebasendays.R
+execute:
+  echo: false
+  fig-height: 10
+  fig-width: 7
+  warning: false
+filters:
+  - lightbox
+
+lightbox: auto
+---
+  
+```{r}
+#| include: false
+library(knitr)
+library(here)
+library(tidyverse)
+library(tibble)
+library(here)
+
+load(file = here('data/ebasendays1.RData'))
+load(file = here('data/ebasendays2.RData'))
+
+windat <- ebasendays1 %>% 
+  enframe(name = 'ndays') %>% 
+  unnest('value') %>% 
+  mutate(
+    period = 'winter'
+  )
+
+sumdat <- ebasendays2 %>% 
+  enframe(name = 'ndays') %>% 
+  unnest('value') %>% 
+  mutate(
+    period = 'summer'
+  )
+
+ndaydat <- bind_rows(windat, sumdat) %>% 
+  unite('ndaysgrp', ndays, grp, sep = ': ', remove = F) %>% 
+  mutate(ndays = factor(ndays))
+
+toplo <- ndaydat 
+```
+
+This analysis evaluates different model optimization lengths for [EBASE](https://fawda123.github.io/EBASE/index.html) for two separate two-week periods of an observed dissolved oxygen time series at Apalachicola Bay. A summer and winter period were evaluated and model optimization periods of 1 day up to 14 days (increasing by 1 day for each model) for each two week period were evaluated.  Model outputs shown include dissolved oxygen, production (Pg), respiration (Rt), gas exchange (D), model parameter a, and model parameter b. 
+
+The optimized model is: 
+
+$$
+\frac{\delta{C_d}}{\delta{t}} = [\,aPAR]\, - [\,r]\, - \frac{1}{H}\left[-bU_{10}^2\left(\frac{s_c}{600} \right)^{-0.5} \left(C_{Sat} - C_d \right )\right]
+$$
+
+::: {.panel-tabset}
+
+## DO
+
+```{r}
+ggplot(toplo, aes(x = DateTimeStamp, y = DO_obs, group = grp)) + 
+  geom_point(aes(color = 'Observed'), size = 0.25) +
+  geom_line(aes(y = DO_mod, color = 'Estimated'), size = 1) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  guides(
+    color = ggplot2::guide_legend(override.aes = list(shape = c(NA, 16), linetype = c(1, NA)))
+  ) +
+  labs(
+    y = expression(paste('Dissolved oxygen (mmol ', m^-3, ')')),
+    color = NULL,
+    shape = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+## Pg
+
+```{r}
+toplo <- ndaydat
+ggplot(toplo, aes(x = DateTimeStamp, y = Pg_vol, group = grp)) + 
+  geom_line(show.legend = F) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  geom_hline(yintercept = 0, linetype = 'dotted') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = expression(paste(Pg[vol], ' (mmol ', m^-3 ~ d^-1, ')')),
+    color = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+## Rt
+
+```{r}
+ggplot(toplo, aes(x = DateTimeStamp, y = -1 * Rt_vol, group = grp)) + 
+  geom_line(show.legend = F) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  geom_hline(yintercept = 0, linetype = 'dotted') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = expression(paste(Rt[vol], ' (mmol ', m^-3 ~ d^-1, ')')),
+    color = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+## D
+
+```{r}
+ggplot(toplo, aes(x = DateTimeStamp, y = -1 * D, group = grp)) + 
+  geom_line(show.legend = F) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  geom_hline(yintercept = 0, linetype = 'dotted') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = expression(paste('D (mmol ', m^-3 ~ d^-1, ')')),
+    color = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+## a
+
+```{r}
+ggplot(toplo, aes(x = DateTimeStamp, y = a, group = grp)) + 
+  geom_line(show.legend = F) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  geom_hline(yintercept = 0, linetype = 'dotted') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = expression(paste('a (mmol ', m^-3 ~ d^-1, ')(W ', m^-2, ')')),
+    color = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+## b
+
+```{r}
+ggplot(toplo, aes(x = DateTimeStamp, y = b, group = grp)) + 
+  geom_line(show.legend = F) + 
+  facet_grid(ndays ~ period, scales = 'free_x') + 
+  geom_hline(yintercept = 0, linetype = 'dotted') + 
+  theme_minimal() + 
+  theme(
+    legend.position = 'top',
+    plot.tag = element_text(angle = -90, hjust = 0.5, vjust = 0, size = rel(1)),
+    plot.tag.position = c(1, 0.5), 
+    plot.margin = unit(c(5.5, 12, 5.5, 5.5), 'pt'), 
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = expression(paste('b (cm ', hr^-1, ')(', m^-2 ~ s^-2, ')')),
+    color = NULL,
+    x = NULL,
+    tag = 'Model optimization length (days)'
+  )
+```
+
+:::

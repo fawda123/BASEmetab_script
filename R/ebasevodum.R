@@ -121,11 +121,11 @@ p2 <- ggplot(toplo1, aes(x = D_op, y = D_eb)) +
     caption = 'R-squared values right of month'
   )
 
-jpeg(here('images/gasexts.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
+jpeg(here('docs/images/gasexts.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
 print(p1)
 dev.off()
 
-jpeg(here('images/gasexcmp.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
+jpeg(here('docs/images/gasexcmp.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
 print(p2)
 dev.off()
 
@@ -213,11 +213,11 @@ p2 <- ggplot(toplob, aes(x = week, y = value, group = var, color = var)) +
     caption = 'R-squared values right of parameter'
   )
 
-jpeg(here('images/weeklycmp.jpg'), height = 5, width = 7, family = 'serif', units = 'in', res = 300)
+jpeg(here('docs/images/weeklycmp.jpg'), height = 5, width = 7, family = 'serif', units = 'in', res = 300)
 print(p1)
 dev.off()
 
-jpeg(here('images/weeklyts.jpg'), height = 5, width = 7, family = 'serif', units = 'in', res = 300)
+jpeg(here('docs/images/weeklyts.jpg'), height = 5, width = 7, family = 'serif', units = 'in', res = 300)
 print(p2)
 dev.off()
 
@@ -282,6 +282,6 @@ p1 <- ggplot(toploa, aes(x = hour, y = value, group = var, color = var)) +
     color = NULL
   )
 
-jpeg(here('images/hourts.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
+jpeg(here('docs/images/hourts.jpg'), height = 5, width = 9, family = 'serif', units = 'in', res = 300)
 print(p1)
 dev.off()

@@ -90,7 +90,7 @@ getsec <- function(x){
   sec <- seconds(x)
   sec <- sec - (7.5 * 60)
   sec <- sec - min(sec)
-  sec <- 1 + as.numeric(sec)
+  sec <- as.numeric(sec)
   
   return(sec)
     
@@ -121,7 +121,8 @@ bsmetab <- fwoxybasemetab %>%
 # format EBASE to match fwoxy
 ebmetab <- fwoxyebase %>%
   mutate(
-    secs = getsec(DateTimeStamp), 
+    secs = getsec(DateTimeStamp),
+    D = -1 * D, 
     typ = 'EBASE'
   ) %>% 
   select(secs, typ, Pg_vol, Rt_vol, D, dDO) %>% 

@@ -198,7 +198,7 @@ ggplot(toplo, aes(x = DateTimeStamp, y = b, group = grp)) +
     panel.grid.minor.y = element_blank()
   ) +
   labs(
-    y = expression(paste('b (cm ', hr^-1, ')(', m^-2 ~ s^-2, ')')),
+    y = expression(paste('b (cm ', hr^-1, ')(', m^2 ~ s^-2, ')')),
     color = NULL,
     x = NULL,
     tag = 'Model optimization length (days)'

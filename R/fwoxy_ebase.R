@@ -36,7 +36,7 @@ data <- example %>%
   select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd) %>% 
   .[-577,]
 
-res <- ebase(data, interval = 900, ndays = 6, H = ht_const, progress = F, n.chains = 5)
+res <- ebase(data, interval = 900, ndays = 6, H = ht_const, progress = F, n.chains = 5, rprior = c(20, 5), bprior = c(0.251, 0.01), aprior = c(0.2, 0.1))
 
 fwoxyebase <- res %>% 
   select(

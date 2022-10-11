@@ -6,6 +6,7 @@ library(lubridate)
 library(fwoxy)
 library(here)
 library(EBASE)
+# devtools::load_all('../EBASE', helpers = F)
 
 source(here('R/funcs.R'))
 
@@ -36,7 +37,7 @@ data <- example %>%
   select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd) %>% 
   .[-577,]
 
-res <- ebase(data, interval = 900, ndays = 6, H = ht_const, progress = F, n.chains = 5, rprior = c(20, 5), bprior = c(0.251, 0.01), aprior = c(0.2, 0.1))
+res <- ebase(data, interval = 900, ndays = 6, H = ht_const, progress = F, n.chains = 5)
 
 fwoxyebase <- res %>% 
   select(

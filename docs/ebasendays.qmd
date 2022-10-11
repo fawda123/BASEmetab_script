@@ -3,7 +3,7 @@ title: "EBASE optimization length evaluation"
 author: 
   - name: Dr. Marcus Beck, <mbeck@tbep.org>
 institute: "Tampa Bay Estuary Program"
-date: "08/25/2022"
+date: "`r Sys.Date()`"
 format:
   html:
     theme: cosmo

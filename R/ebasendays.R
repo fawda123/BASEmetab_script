@@ -41,7 +41,7 @@ for(i in 1:stps){
   
   cat(i, '\t')
   H <- 1.85
-  ebmetab <- ebase(ebdat1, H = H, interval = 900, ndays = i, n.chains = 5, progress = F)
+  ebmetab <- ebase(ebdat1, H = H, interval = 900, ndays = i, n.chains = 5, progress = F, bprior = c(0.251, 0.05))
   out1[[i]] <- ebmetab
   
 }
@@ -61,7 +61,7 @@ for(i in 1:stps){
   
   cat(i, '\t')
   H <- 1.85
-  ebmetab <- ebase(ebdat2, H = H, interval = 900, ndays = i, n.chains = 5, progress = F)
+  ebmetab <- ebase(ebdat2, H = H, interval = 900, ndays = i, n.chains = 5, progress = F, bprior = c(0.251, 0.05))
   out2[[i]] <- ebmetab
   
 }

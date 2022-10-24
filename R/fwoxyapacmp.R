@@ -8,6 +8,8 @@ library(doParallel)
 
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
+# fwoxy for comparison
+# convert areal to volumetric, extract b at right time step
 fwdatcmp <- fwdat %>% 
   mutate(
     DateTimeStamp = dmy_hms(datet, tz = 'America/Jamaica'),
@@ -21,6 +23,7 @@ fwdatcmp <- fwdat %>%
   ) %>% 
   select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
 
+# fwoxy for input to ebase
 fwdatinp <- fwdat %>% 
   mutate(
     datet = dmy_hms(datet, tz = 'America/Jamaica')
@@ -39,48 +42,84 @@ fwdatinp <- fwdat %>%
     WSpd = sqrt(WSpd)
   )
 
-# subset four days in June
-dat <- fwdatinp %>%
-  filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
+# # simple comparison ---------------------------------------------------------------------------
+# 
+# # subset four days in June
+# dat <- fwdatinp %>%
+#   filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
+# 
+# cl <- makeCluster(4)
+# registerDoParallel(cl)
+# 
+# res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = F)
+# 
+# stopCluster(cl)
+# 
+# fwdatinpcmp <- fwdatcmp %>% 
+#   filter(Date <= max(res$Date) & Date >= min(res$Date))
+# 
+# cmp <- inner_join(fwdatcmp, res, by = c('Date', 'DateTimeStamp')) %>% 
+#   select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>% 
+#   rename(
+#     DO_mod.x = DO_obs.x, 
+#     DO_mod.y = DO_mod
+#   ) %>% 
+#   pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>% 
+#   separate(var, c('var', 'mod'), sep = '\\.') %>% 
+#   mutate(
+#     mod = case_when(
+#       mod == 'x' ~ 'Fwoxy', 
+#       mod == 'y' ~ 'EBASE'
+#     )
+#   ) %>% 
+#   pivot_wider(names_from = 'mod', values_from = 'val')
+# 
+# ggplot(cmp, aes(x = Fwoxy, y = EBASE, color = var)) + 
+#   geom_point() +
+#   facet_wrap(~var, ncol = 2, scales = 'free') +
+#   theme_bw() + 
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme(
+#     legend.title = element_blank(),
+#     strip.background = element_blank()
+#   )
 
-cl <- makeCluster(4)
-registerDoParallel(cl)
+# gridded comparison --------------------------------------------------------------------------
 
-res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = F)
+grd <- crossing(
+  amean = 0.2, #c(0, 0.2, 2),
+  asd = c(0.01, 0.1, 1),
+  rmean = 20, #c(0, 20, 200), 
+  rsd = c(0.5, 5, 500), 
+  bmean = 0.251, #c(0.0251, 0.251, 2.51), 
+  bsd = c(0.001, 0.01, 0.1),
+  out = NA
+  # ndays = seq(1, 14)
+)
 
-stopCluster(cl)
+str <- Sys.time()
 
-fwdatinpcmp <- fwdatcmp %>% 
-  filter(Date <= max(res$Date) & Date >= min(res$Date))
-
-cmp <- inner_join(fwdatcmp, res, by = c('Date', 'DateTimeStamp')) %>% 
-  select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>% 
-  rename(
-    DO_mod.x = DO_obs.x, 
-    DO_mod.y = DO_mod
-  ) %>% 
-  pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>% 
-  separate(var, c('var', 'mod'), sep = '\\.') %>% 
-  mutate(
-    mod = case_when(
-      mod == 'x' ~ 'Fwoxy', 
-      mod == 'y' ~ 'EBASE'
-    )
-  ) %>% 
-  pivot_wider(names_from = 'mod', values_from = 'val')
-
-ggplot(cmp, aes(x = Fwoxy, y = EBASE, color = var)) + 
-  geom_point() +
-  facet_wrap(~var, ncol = 2, scales = 'free') +
-  # coord_equal() + 
-  # scale_color_manual(values = colors) + 
-  theme_bw() + 
-  geom_abline(intercept = 0, slope = 1) +
-  # labs(
-  #   y = 'Odum, Flux, mmol/m3/d', 
-  #   x = 'Fwoxy, flux, mmol/m3/d'
-  # ) +
-  theme(
-    legend.title = element_blank(),
-    strip.background = element_blank()
-  )
+for(i in 1:nrow(grd)){
+  
+  # counter
+  cat(i, 'of', nrow(grd))
+  print(Sys.time() - str)
+  
+  # get inputs
+  selrow <- grd[i, ]
+  aprior <- c(selrow$amean, selrow$asd)
+  rprior <- c(selrow$rmean, selrow$rsd)
+  bprior <- c(selrow$bmean, selrow$bsd)
+  
+  # run model for inputs
+  cl <- makeCluster(4)
+  registerDoParallel(cl)
+  
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, interp = F)
+  
+  stopCluster(cl)
+  
+  # append output to grd
+  grd$out[[i]] <- list(res)
+  
+}

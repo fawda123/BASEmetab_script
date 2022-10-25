@@ -45,16 +45,16 @@ fwdatinp <- fwdat %>%
 # # simple comparison ---------------------------------------------------------------------------
 # 
 # # subset four days in June
-# dat <- fwdatinp %>%
-#   filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
-# 
-# cl <- makeCluster(4)
-# registerDoParallel(cl)
-# 
-# res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = F)
-# 
-# stopCluster(cl)
-# 
+dat <- fwdatinp[1:20000, ]# %>%
+  # filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
+
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = F)
+
+stopCluster(cl)
+
 # fwdatinpcmp <- fwdatcmp %>% 
 #   filter(Date <= max(res$Date) & Date >= min(res$Date))
 # 
@@ -97,12 +97,15 @@ grd <- crossing(
   # ndays = seq(1, 14)
 )
 
+dat <- fwdatinp %>%
+  filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
+
 str <- Sys.time()
 
 for(i in 1:nrow(grd)){
   
   # counter
-  cat(i, 'of', nrow(grd))
+  cat(i, 'of', nrow(grd), '\n')
   print(Sys.time() - str)
   
   # get inputs
@@ -115,7 +118,8 @@ for(i in 1:nrow(grd)){
   cl <- makeCluster(4)
   registerDoParallel(cl)
   
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, interp = F)
+  res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = F, 
+               aprior = aprior, rprior = rprior, bprior = bprior)
   
   stopCluster(cl)
   

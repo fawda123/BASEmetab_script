@@ -126,4 +126,6 @@ for(i in 1:nrow(grd)){
   
 }
 
+apagrd <- grd
+save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
 # use left_join of fwdatinp with res to remove interpolated values where there are gaps in the original

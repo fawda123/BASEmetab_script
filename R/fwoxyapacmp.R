@@ -5,6 +5,8 @@ library(lubridate)
 library(here)
 library(EBASE)
 library(doParallel)
+library(ggplot2)
+library(patchwork)
 
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
@@ -86,11 +88,12 @@ fwdatinp <- fwdat %>%
 
 # gridded comparison --------------------------------------------------------------------------
 
+# this takes about ten hours to run
 grd <- crossing(
   amean = 0.2, #c(0, 0.2, 2),
   asd = c(0.01, 0.1, 1),
   rmean = 20, #c(0, 20, 200), 
-  rsd = c(0.5, 5, 500), 
+  rsd = c(0.5, 5, 50), 
   bmean = 0.251, #c(0.0251, 0.251, 2.51), 
   bsd = c(0.001, 0.01, 0.1),
   out = NA
@@ -131,47 +134,36 @@ save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
 
 # evaluate fit --------------------------------------------------------------------------------
 
+load(file = here('data/apagrd.RData'))
+
 grd <- apagrd %>% 
   select(-out)
 
-fwdat <- read_csv(here("data/apafwoxy.csv")) 
-
-# fwoxy for comparison
-# convert areal to volumetric, extract b at right time step
-fwdatcmp <- fwdat %>% 
-  mutate(
-    DateTimeStamp = dmy_hms(datet, tz = 'America/Jamaica'),
-    Date = as.Date(DateTimeStamp, tz = 'America/Jamaica'),
-    DO_obs = `oxy,mmol/m3`, 
-    a = `aparam,(mmolO2/m2/d)/(W/m2)` / `ht,m`,
-    Rt_vol = `er,mmol/m2/d` / `ht,m`,
-    Pg_vol = `gpp,mmol/m2/d` / `ht,m`,
-    D = -1 * `gasex,mmol/m2/d` / `ht,m`,
-    b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 600) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
-  ) %>% 
-  select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
-
-# summary function and ave diff
+# summary function for r2, rmse, and ave diff
 sumfun <- function(x){
   
+  # r2
   r2 <- lm(EBASE ~ Fwoxy, x) %>% 
     summary() %>% 
     .$r.squared
   r2 <- 100 * r2
   
+  # rmse
+  rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
+  
+  # aved
   ts1 <- sum(x$EBASE, na.rm = TRUE)
   ts2 <- sum(x$Fwoxy, na.rm = TRUE)
   
   aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
   
-  out <- data.frame(r2 = r2, aved = aved)
+  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
   
   return(out)
   
 }
 
-
-sumdat <- apagrd %>% 
+apasumdat <- apagrd %>% 
   mutate(
     ind = 1:nrow(.),
     ests = purrr::pmap(list(ind, out), function(ind, out){
@@ -218,18 +210,90 @@ sumdat <- apagrd %>%
     })
   )
 
-toplo <- sumdat %>% 
-  select(-out, -ind, -amean, -rmean, -bmean) %>% 
-  unnest('ests') %>% 
-  mutate(
-    asd = factor(asd),
-    rsd = factor(rsd), 
-    bsd = factor(bsd)
-  ) %>% 
-  filter(!var %in% 'b')
+save(apasumdat, file = here('data/apasumdat.RData'), compress = 'xz')
+met <- tibble(
+  lbs = c('r2', 'rmse', 'aved'),
+  lbspr = c('R^2', 'RMSE', 'Ave.\nDiff.'), 
+  direc = c(-1, 1, 1)
+)
 
-# maybe do as flextable or reactable?
-ggplot(toplo, aes(x = var, y = rsd, fill = r2)) +
-  geom_tile() + 
-  facet_grid(asd ~ bsd)
+ind <- 1
+toshw <- met$lbs[ind]
+leglb <- met$lbspr[ind]
+direc <- met$direc[ind]
+
+toplo <- apasumdat %>% 
+  select(-out, -amean, -rmean, -bmean) %>% 
+  unnest('ests') %>% 
+  select(asd, rsd, bsd, var, matches(toshw)) %>%
+  filter(!var %in% 'b') %>% 
+  pivot_wider(names_from = 'var', values_from = !!toshw) %>% 
+  mutate(
+    ind = 1:nrow(.)
+  )
+
+toplo1 <- toplo %>% 
+  select(ind, asd, rsd, bsd) %>% 
+  mutate(
+    def = case_when(
+      asd == 0.1 & rsd == 5 & bsd == 0.01 ~ '*', 
+      T ~ ''
+    ),
+    asd = factor(asd, labels = c('L', 'M', 'H')), 
+    rsd = factor(rsd, labels = c('L', 'M', 'H')), 
+    bsd = factor(bsd, labels = c('L', 'M', 'H')), 
+  ) %>% 
+  pivot_longer(-c('ind', 'def'), names_to = 'var', values_to = 'val') %>% 
+  mutate(
+    var = factor(var, 
+                 levels = c('asd', 'rsd', 'bsd'), 
+                 labels = c('a', 'r', 'b'))
+  ) 
+
+toplo2 <- toplo %>% 
+  select(-asd, -rsd, -bsd) %>%  
+  pivot_longer(-ind, names_to = 'var', values_to = 'val') %>% 
+  mutate(
+    var = factor(var, 
+                 levels = c('DO_mod', 'Pg_vol', 'Rt_vol', 'D', 'a'), 
+                 labels = c('DO [mod]', 'Pg [vol]', 'Rt [vol]', 'D', 'a')
+                 )
+  )
+  
+p1 <- ggplot(toplo1, aes(y = ind, x = var, fill = val)) + 
+  geom_tile(color = 'black') + 
+  theme(
+    axis.text.x = element_text(size = 12), 
+    axis.text.y = element_text(size = 12),
+    axis.ticks = element_blank(), 
+    legend.position = 'left', 
+    legend.title = element_blank()
+  ) + 
+  scale_fill_brewer(palette = 'Greys') + 
+  scale_x_discrete(position = 'top', expand = c(0, 0)) + 
+  scale_y_reverse(expand = c(0, 0), breaks = toplo1$ind, labels = toplo1$def) + 
+  labs(
+    y = NULL, 
+    x = 'Variance of prior', 
+    caption = '* EBASE default'
+  )
+
+p2 <- ggplot(toplo2, aes(y = ind, x = var, fill = val)) + 
+  geom_tile(color = 'black') + 
+  theme(
+    axis.text.x = element_text(face = 'italic', size = 12), 
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(), 
+    legend.position = 'right'
+  ) + 
+  scale_fill_distiller(palette = 'YlOrRd', direction = direc) + 
+  scale_x_discrete(position = 'top', expand = c(0, 0), labels = parse(text = levels(toplo2$var))) + 
+  scale_y_reverse(expand = c(0, 0)) + 
+  labs(
+    y = NULL, 
+    fill = parse(text = leglb),
+    x = 'Parameter from EBASE vs Fwoxy'
+  )
+
+p1 + p2 + plot_layout(ncol = 2, widths = c(0.5, 1))
 

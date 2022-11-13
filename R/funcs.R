@@ -82,19 +82,24 @@ priorcomp <- function(apasumdat, ind){
   toshw <- met$lbs[ind]
   leglb <- met$lbspr[ind]
   direc <- met$direc[ind]
-  
+
   toplo <- apasumdat %>% 
-    select(-out, -amean, -rmean, -bmean) %>% 
+    select(-amean, -rmean, -bmean) %>% 
     unnest('ests') %>% 
-    select(asd, rsd, bsd, var, matches(toshw)) %>%
+    select(ndays, asd, rsd, bsd, var, matches(toshw)) %>%
     filter(!var %in% 'b') %>% 
     pivot_wider(names_from = 'var', values_from = !!toshw) %>% 
     mutate(
-      ind = 1:nrow(.)
+      ind = sort(rep(1: (nrow(.) / 2), times = 2)), 
+      ndays = case_when(
+        ndays == 1 ~ paste(ndays, 'day'), 
+        T ~ paste(ndays, 'days')
+      )
     )
   
   toplo1 <- toplo %>% 
     select(ind, asd, rsd, bsd) %>% 
+    unique() %>% 
     mutate(
       def = case_when(
         asd == 0.1 & rsd == 5 & bsd == 0.01 ~ '*', 
@@ -112,8 +117,8 @@ priorcomp <- function(apasumdat, ind){
     ) 
   
   toplo2 <- toplo %>% 
-    select(-asd, -rsd, -bsd) %>%  
-    pivot_longer(-ind, names_to = 'var', values_to = 'val') %>% 
+    select(-asd, -rsd, -bsd) %>%
+    pivot_longer(-c(ind, ndays), names_to = 'var', values_to = 'val') %>% 
     mutate(
       var = factor(var, 
                    levels = c('DO_mod', 'Pg_vol', 'Rt_vol', 'D', 'a'), 
@@ -135,7 +140,7 @@ priorcomp <- function(apasumdat, ind){
     scale_y_reverse(expand = c(0, 0), breaks = toplo1$ind, labels = toplo1$def) + 
     labs(
       y = NULL, 
-      x = 'Variance of prior', 
+      x = 'Variance of prior',
       caption = '* EBASE default'
     )
   
@@ -145,8 +150,11 @@ priorcomp <- function(apasumdat, ind){
       axis.text.x = element_text(face = 'italic', size = 12), 
       axis.text.y = element_blank(),
       axis.ticks = element_blank(), 
-      legend.position = 'right'
+      legend.position = 'right', 
+      strip.background = element_blank(), 
+      strip.text = element_text(hjust = 0, size = 12, face = 'bold')
     ) + 
+    facet_wrap(~ndays, ncol = 2) + 
     scale_fill_distiller(palette = 'YlOrRd', direction = direc) + 
     scale_x_discrete(position = 'top', expand = c(0, 0), labels = parse(text = levels(toplo2$var))) + 
     scale_y_reverse(expand = c(0, 0)) + 
@@ -156,8 +164,115 @@ priorcomp <- function(apasumdat, ind){
       x = 'Parameter from EBASE vs Fwoxy'
     )
   
-  out <- p1 + p2 + plot_layout(ncol = 2, widths = c(0.5, 1))
+  out <- p1 + p2 + plot_layout(ncol = 2, widths = c(0.3, 1))
   
   return(out)
+  
+}
+
+# comparison of fwoxy and ebase results for selected prior at time step of ndays
+optex <- function(apagrd, fwdatcmp, asdin, rsdin, bsdin, ndaysin){
+  
+  res <- apagrd %>% 
+    filter(
+      asd == asdin & rsd == rsdin & bsd == bsdin & ndays == ndaysin
+    ) %>% 
+    pull(out) %>% 
+    .[[1]] %>% 
+    .[[1]]
+  cmp <- inner_join(fwdatcmp, res, by = c('Date', 'DateTimeStamp')) %>%
+    select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
+    rename(
+      DO_mod.x = DO_obs.x,
+      DO_mod.y = DO_mod
+    ) %>%
+    pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>%
+    separate(var, c('var', 'mod'), sep = '\\.') %>%
+    mutate(
+      mod = case_when(
+        mod == 'x' ~ 'Fwoxy',
+        mod == 'y' ~ 'EBASE'
+      )
+    ) %>%
+    pivot_wider(names_from = 'mod', values_from = 'val')
+
+  toplo1 <- cmp %>% 
+    filter(var %in% c('Pg_vol', 'Rt_vol', 'D')) %>% 
+    group_by(grp, var) %>% 
+    summarise(
+      Fwoxy = mean(Fwoxy, na.rm = T), 
+      EBASE = mean(EBASE, na.rm = T),
+      Date  = min(Date),
+      .groups = 'drop'
+    ) %>% 
+    pivot_longer(-c(Date, grp, var), names_to = 'model', values_to = 'est') %>% 
+    mutate(
+      var = factor(var, 
+                   levels = c('Pg_vol', 'Rt_vol', 'D'), 
+                   labels = c('Pg [vol]', 'Rt [vol]', 'D')
+      )
+    ) %>% 
+    select(-grp)
+  
+  ylab <- expression(paste(O [2], ' (mmol ', m^-3, ' ', d^-1, ')'))
+  
+  p1 <- ggplot(toplo1, aes(x = Date, y = est, group = model, color = model)) + 
+    geom_line() +
+    geom_point() + 
+    facet_wrap(~var, ncol = 1, strip.position = 'left', scales = 'free_y', labeller = label_parsed) + 
+    theme_minimal() + 
+    theme(
+      strip.placement = 'outside', 
+      strip.background = element_blank(), 
+      legend.position = 'top', 
+      legend.title = element_blank(),
+      strip.text = element_text(size = rel(1))
+    ) + 
+    labs(
+      x = NULL, 
+      y = ylab
+    )
+  
+  labs <- c('DO[mod]~(mmol~O[2]~m^{3}~d^{-1})',
+            'a~(mmol~m^{-3}~d^{-1})/(W~m^{-2})', 
+            'b~(cm~hr^{-1})/(m^{2}~s^{-2})'
+  )
+  
+  toplo2 <- cmp %>% 
+    filter(var %in% c('DO_mod', 'a', 'b')) %>% 
+    group_by(grp, var) %>%
+    summarise(
+      Fwoxy = mean(Fwoxy, na.rm = T),
+      EBASE = mean(EBASE, na.rm = T),
+      Date = min(Date),
+      .groups = 'drop'
+    ) %>%
+    pivot_longer(-c(Date, grp, var), names_to = 'model', values_to = 'est') %>% 
+    mutate(
+      var = factor(var, 
+                   levels = c('DO_mod', 'a', 'b'), 
+                   labels = labs
+      )
+    ) %>% 
+    select(-grp)
+  
+  p2 <- ggplot(toplo2, aes(x = Date, y = est, group = model, color = model)) + 
+    geom_line() +
+    geom_point() +
+    facet_wrap(~var, ncol = 1, strip.position = 'left', scales = 'free_y', labeller = label_parsed) + 
+    theme_minimal() + 
+    theme(
+      strip.placement = 'outside', 
+      strip.background = element_blank(), 
+      legend.position = 'top', 
+      legend.title = element_blank(), 
+      strip.text = element_text(size = rel(1))
+    ) + 
+    labs(
+      x = NULL, 
+      y = NULL
+    )
+  
+  p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'top')
   
 }

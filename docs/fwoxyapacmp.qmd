@@ -32,6 +32,7 @@ library(lubridate)
 source(here('R/funcs.R'))
 
 load(file = here('data/apasumdat.RData'))
+load(file = here('data/apagrd.RData'))
 
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
@@ -58,7 +59,7 @@ fwdatcmp <- fwdat %>%
 
 This page describes a sensitivity analysis of [EBASE](https://fawda123.github.io/EBASE/index.html) to estimate metabolic rates and parameters using a time series with known inputs. The known time series used field-derived data from Apalachicola Bay to simulate a time series using a forward oxygen mass balance model from [Fwoxy](https://github.com/jmarriola/fwoxy).
 
-The sensitivity analysis evaluated three different prior distributions for the $a$, $r$, and $b$ parameters in the equation below.
+The sensitivity analysis evaluated three different prior distributions for the $a$, $r$, and $b$ parameters in the equation below.  Model optimization periods were also compared using one and seven days for each combination of prior distributions. 
 
 $$
 \frac{\delta{C_d}}{\delta{t}} = [\,aPAR]\, - [\,r]\, - \frac{1}{H}\left[-bU_{10}^2\left(\frac{s_c}{600} \right)^{-0.5} \left(C_{Sat} - C_d \right )\right]
@@ -70,11 +71,20 @@ Each prior distribution was varied using a different standard deviation varying 
 prior_plot()
 ```
 
-A total of `r nrow(apasumdat)` combinations were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the period varied by orders of magnitude (10%, 100%, and 1000%) from the default values.  
+A total of `r nrow(apasumdat)` combinations for each of two optimization periods were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the priors varied by orders of magnitude (10%, 100%, and 1000%) from the default values.
 
 ```{r}
 apasumdat %>% 
-  select(-out, -ests, -amean, -rmean, -bmean, -ind) %>% 
+  filter(ndays == 1) %>% 
+  select(-ests, -amean, -rmean, -bmean, -ind, -ndays) %>% 
+  mutate(
+    asdf = paste0('(', factor(asd, labels = c('L', 'M', 'H')), ')'),
+    rsdf = paste0('(', factor(rsd, labels = c('L', 'M', 'H')), ')'),
+    bsdf = paste0('(', factor(bsd, labels = c('L', 'M', 'H')), ')')
+  ) %>% 
+  unite('asd', asd, asdf, sep = ' ') %>% 
+  unite('rsd', rsd, rsdf, sep = ' ') %>% 
+  unite('bsd', bsd, bsdf, sep = ' ') %>% 
   kable()
 ```
 
@@ -116,7 +126,7 @@ ggplot(fwdatcmp, aes(x = DateTimeStamp, y = b)) +
 
 ## Comparisons
 
-The following shows a summary of the model output for each unique combination of prior distributions for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  This applies to $Rt_{vol}$ and $a$. The optimization period for these results is one day. 
+The following shows a summary of the model output for each unique combination of prior distributions and two optimization periods of one and seven days for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE, for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  This applies to $Rt_{vol}$ and $a$.
 
 ### R-squared
 
@@ -132,6 +142,66 @@ priorcomp(apasumdat, 1)
 #| fig-height: 9
 #| fig-width: 9
 priorcomp(apasumdat, 2)
+```
+
+## Conclusions
+
+Several conclusions can be made from the sensitivity analysis regarding the ability of EBASE to simulate the known parameters from the simulated Fwoxy time series.  These are based on identified patterns in the R$^2$ and RMSE estimates for different combinations of the priors.
+
+* Parameters estimates are minimally influenced by changes in the variance of the $a$ parameter.  
+* Lower variance of the $r$ prior distribution contributed to lower R$^2$ and higher RMSE values for all parameters, the fit was worsened with a longer optimization period (e.g, lower R$^2$ for the $a$ parameter and higher RMSE for Pg$_{vol}$ at seven day optimization)
+* Higher variance of the $b$ prior distribution contributed to lower R$^2$ and higher RMSE values for most parameters (e.g., lower R$^2$ and higher RMSE for D)
+* Longer optimization period generally improved fits in parameter estimates, with some exceptions noted above
+
+Recommendation:
+
+* The default prior distributions for the parameters may be appropriate in some cases, but increasing the variance for $a$ and $r$ and decreasing the variance for $b$ produces more optimal solutions.  The top three optimal solutions based on maximum average R$^2$ or minimum average RMSE are as follows for each optimization period.
+
+```{r}
+optest <- apasumdat %>% 
+  unnest('ests') %>% 
+  group_by(asd, rsd, bsd, ndays) %>% 
+  summarise(
+    r2 = mean(r2), 
+    rmse = mean(rmse), 
+    .groups = 'drop'
+    ) %>% 
+  group_by(ndays) %>% 
+  mutate(
+    asdf = paste0('(', factor(asd, labels = c('L', 'M', 'H')), ')'),
+    rsdf = paste0('(', factor(rsd, labels = c('L', 'M', 'H')), ')'),
+    bsdf = paste0('(', factor(bsd, labels = c('L', 'M', 'H')), ')'),
+    rnkr2 = rank(-r2), 
+    rnkrmse = rank(rmse)
+  ) %>% 
+  ungroup() %>% 
+  unite('asd', asd, asdf, sep = ' ') %>% 
+  unite('rsd', rsd, rsdf, sep = ' ') %>% 
+  unite('bsd', bsd, bsdf, sep = ' ') %>% 
+  filter(rnkr2 %in% c(1, 2, 3) | rnkrmse %in% c(1, 2, 3)) %>% 
+  rename(
+    `Ave. r2` = r2, 
+    `Ave. rmse` = rmse
+  ) %>% 
+  arrange(ndays)
+
+kable(optest)
+```
+
+Result comparisons at the time step of the optimization period are shown for different examples of the optimal prior distributions from above. 
+
+### asd = 1, rsd = 50, bsd = 0.001, ndays = 1
+
+```{r}
+#| fig-height: 13
+optex(apagrd, fwdatcmp, asdin = 1, rsdin = 50, bsdin = 0.001, ndaysin = 1)
+```
+
+### asd = 0.01, rsd = 50, bsd = 0.001, ndays = 7
+
+```{r}
+#| fig-height: 13
+optex(apagrd, fwdatcmp, asdin = 0.01, rsdin = 50, bsdin = 0.001, ndaysin = 7)
 ```
 
 :::

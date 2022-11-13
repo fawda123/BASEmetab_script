@@ -209,7 +209,8 @@ apasumdat <- apagrd %>%
       return(sumcmp)
       
     })
-  )
+  ) %>% 
+  select(-out)
 
 save(apasumdat, file = here('data/apasumdat.RData'), compress = 'xz')
 

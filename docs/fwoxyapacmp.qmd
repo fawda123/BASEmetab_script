@@ -1,0 +1,137 @@
+---
+title: "EBASE sensititivity analysis"
+author: 
+  - name: Dr. Marcus Beck, <mbeck@tbep.org>
+institute: "Tampa Bay Estuary Program"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: cosmo
+    code-tools: 
+      source: https://github.com/fawda123/BASEmetab_script/blob/master/R/fwoxyapacmp.R
+execute:
+  echo: false
+  fig-height: 4
+  fig-width: 8
+  warning: false
+filters:
+  - lightbox
+
+lightbox: auto
+---
+  
+```{r}
+#| include: false
+library(knitr)
+library(here)
+library(tidyverse)
+library(patchwork)
+library(EBASE)
+library(lubridate)
+
+source(here('R/funcs.R'))
+
+load(file = here('data/apasumdat.RData'))
+
+fwdat <- read_csv(here("data/apafwoxy.csv")) 
+
+# fwoxy for comparison
+# convert areal to volumetric, extract b at right time step
+fwdatcmp <- fwdat %>% 
+  mutate(
+    DateTimeStamp = dmy_hms(datet, tz = 'America/Jamaica'),
+    Date = as.Date(DateTimeStamp, tz = 'America/Jamaica'),
+    DO_obs = `oxy,mmol/m3`, 
+    a = `aparam,(mmolO2/m2/d)/(W/m2)` / `ht,m`,
+    Rt_vol = `er,mmol/m2/d` / `ht,m`,
+    Pg_vol = `gpp,mmol/m2/d` / `ht,m`,
+    D = -1 * `gasex,mmol/m2/d` / `ht,m`,
+    b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 600) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
+  ) %>% 
+  select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
+```
+
+
+::: {.panel-tabset}
+
+## Overview
+
+This page describes a sensitivity analysis of [EBASE](https://fawda123.github.io/EBASE/index.html) to estimate metabolic rates and parameters using a time series with known inputs. The known time series used field-derived data from Apalachicola Bay to simulate a time series using a forward oxygen mass balance model from [Fwoxy](https://github.com/jmarriola/fwoxy).
+
+The sensitivity analysis evaluated three different prior distributions for the $a$, $r$, and $b$ parameters in the equation below.
+
+$$
+\frac{\delta{C_d}}{\delta{t}} = [\,aPAR]\, - [\,r]\, - \frac{1}{H}\left[-bU_{10}^2\left(\frac{s_c}{600} \right)^{-0.5} \left(C_{Sat} - C_d \right )\right]
+$$
+
+Each prior distribution was varied using a different standard deviation varying from small to large to test the effect of more and less constrained ranges, respectively, on the priors.  The default prior distributions for EBASE are as follows, where the standard deviations for $a$, $r$, and $b$ are 0.1, 5, and 0.01: 
+
+```{r}
+prior_plot()
+```
+
+A total of `r nrow(apasumdat)` combinations were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the period varied by orders of magnitude (10%, 100%, and 1000%) from the default values.  
+
+```{r}
+apasumdat %>% 
+  select(-out, -ests, -amean, -rmean, -bmean, -ind) %>% 
+  kable()
+```
+
+The output from EBASE for each combination of prior distributions was compared to the known values from the simulated time series. 
+
+```{r}
+ebase_plot(fwdatcmp, instantaneous = F)
+```
+
+```{r}
+ggplot(fwdatcmp, aes(x = DateTimeStamp, y = DO_obs)) + 
+  geom_line() + 
+  theme_minimal() + 
+  labs(
+    x = NULL, 
+    y = expression(paste(O [2], ' (mmol ', m^-3, ')'))
+  )
+```
+
+```{r}
+ggplot(fwdatcmp, aes(x = DateTimeStamp, y = a)) + 
+  geom_line() + 
+  theme_minimal() + 
+  labs(
+    x = NULL, 
+    y = expression(paste('a (mmol ', m^-3, d^-1, ') / (W ', m^{-2}, ')'))
+  )
+```
+
+```{r}
+ggplot(fwdatcmp, aes(x = DateTimeStamp, y = b)) + 
+  geom_line() + 
+  theme_minimal() + 
+  labs(
+    x = NULL, 
+    y = expression(paste('b (cm ', hr^-1, ') / (', m^{2}, s^{-2}, ')'))
+  )
+```
+
+## Comparisons
+
+The following shows a summary of the model output for each unique combination of prior distributions for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  This applies to $Rt_{vol}$ and $a$. The optimization period for these results is one day. 
+
+### R-squared
+
+```{r}
+#| fig-height: 9
+#| fig-width: 9
+priorcomp(apasumdat, 1)
+```
+
+### RMSE
+
+```{r}
+#| fig-height: 9
+#| fig-width: 9
+priorcomp(apasumdat, 2)
+```
+
+:::

@@ -96,13 +96,13 @@ grd <- crossing(
   rsd = c(0.5, 5, 50), 
   bmean = 0.251, #c(0.0251, 0.251, 2.51), 
   bsd = c(0.001, 0.01, 0.1),
+  ndays = c(1, 7),
   out = NA
-  # ndays = seq(1, 14)
 )
 
 str <- Sys.time()
 
-for(i in 1:nrow(grd)){
+for(i in 1:39){#nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')
@@ -113,14 +113,15 @@ for(i in 1:nrow(grd)){
   aprior <- c(selrow$amean, selrow$asd)
   rprior <- c(selrow$rmean, selrow$rsd)
   bprior <- c(selrow$bmean, selrow$bsd)
+  ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(4)
+  cl <- makeCluster(6)
   registerDoParallel(cl)
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = bprior)
+               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
   
   stopCluster(cl)
   

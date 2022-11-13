@@ -1,0 +1,595 @@
+[33mcommit ddc62ffa020dc2a3c90d93cec7442996d84aa334[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Nov 10 11:34:41 2022 -0500
+
+    summary data process for fwoxy apa comparison
+
+[33mcommit 2a580e704dddad0891b05bdd85cf0efc4eef72b8[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 9 17:20:38 2022 -0500
+
+    working on fwoxy apa comparisons for gridded output
+
+[33mcommit f92972ef1e5634f57d00e0f225ba764b866c35d9[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 9 14:29:17 2022 -0500
+
+    save script
+
+[33mcommit 2dab18b32a1bfbf81be878c2ce6cd30ff3934f11[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 9 14:26:15 2022 -0500
+
+    save initial grid processing of apa fwoxy data
+
+[33mcommit 90ef11f33027381d5febbc9ba7e65131d4d37d00[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 25 08:47:34 2022 -0400
+
+    troubleshooting fwoxy apa metab est
+
+[33mcommit 394121345f1553355462c44d065a8a402cf73337[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Oct 24 11:18:23 2022 -0400
+
+    initial grid processing script for fwoxy apa
+
+[33mcommit 1d5955da737b1a37f0c479cb12a5fc63dc625fb9[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Oct 19 17:29:14 2022 -0400
+
+    very prelim comparison of ebase with apa fwoxy
+
+[33mcommit d55a0b8ba89dcf61876b6f5fb9178a6e3d8c5a5c[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 11 10:37:08 2022 -0400
+
+    reproc ebasendays with larger sd for b prior, qmd has automic date
+
+[33mcommit cb0b1f12b001ca22d20c58d793399a9766b18669[m
+Merge: a0498f6 c4d85fb
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 11 08:40:19 2022 -0400
+
+    Merge branch 'master' of https://github.com/fawda123/BASEmetab_script
+
+[33mcommit a0498f643d1de5802401c644467193e535189137[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 11 08:40:17 2022 -0400
+
+    reproc ebase ndays analysis with ebase update
+
+[33mcommit c4d85fb7bafb772ed20c19daf130fe8dbf1cf696[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Oct 10 17:33:14 2022 -0400
+
+    reproc fwoxy ebase
+
+[33mcommit 6bd96acad0dab06de108e14d6c630300c1254294[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Oct 7 14:14:38 2022 -0400
+
+    reprod ebase v odum
+
+[33mcommit 005f11ba4f78cb7b3d7bc326116ec1e43e01ba03[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Oct 7 13:46:44 2022 -0400
+
+    reproc fwoxy_ebase and reknit fwoxy_comp
+
+[33mcommit 07898d85e07fc79ea1697cded27d275d8df09b6d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Oct 3 17:31:54 2022 -0400
+
+    ndays for fwoxy_ebase to 6
+
+[33mcommit f88c3caf08625b366ee5e66dedb1314093ccf184[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Sep 13 13:37:29 2022 -0400
+
+    fixing units for y-axis label on b
+
+[33mcommit 214de9e80ebf043d6802e555bfc25409b3d9e7c5[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Aug 26 16:02:32 2022 -0400
+
+    updating fwoxy comp with ebase updates
+
+[33mcommit 4ad5cc2c293eb4daae2f2227e98ff3f37a7eada2[m
+Merge: d2ae6c7 f4344d4
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Aug 26 14:19:48 2022 -0400
+
+    junk commit for log
+
+[33mcommit d2ae6c713e44b9e81dfa9c76acfdacf28391d056[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Aug 26 14:18:57 2022 -0400
+
+    junk commit for log
+
+[33mcommit f4344d4afd134f21a20b3912822d55afe60e99fc[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Aug 26 14:17:42 2022 -0400
+
+    reproc ebasevodum with ebase update
+
+[33mcommit 49087bbae14b6eb5a5fe0ff0e50a20f1706f2686[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Aug 26 11:43:18 2022 -0400
+
+    reproc ebasendays with ebase update no positive resp
+
+[33mcommit d5e95876fc4f52e4abc0563355dd0560fb3ca70a[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 25 15:56:17 2022 -0400
+
+    fix ebasendays link in readme
+
+[33mcommit 6de72f3ecd3486df6c9c613eee5fe9bf20982f8e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 25 15:53:20 2022 -0400
+
+    quarto summary of ebase ndays evaluation
+
+[33mcommit f7eaa32187b0ac7a2ed7feb345dd933448ac9950[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Aug 24 16:44:57 2022 -0400
+
+    fix file names for ebasendays
+
+[33mcommit 3efc21457478d7081434700dc29678e75887e5c8[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Aug 21 12:54:51 2022 -0400
+
+    data processing for nday evaluation w/ ebase
+
+[33mcommit ba7ea0d0e04050f25dade21a77742d300db4039f[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Aug 1 16:16:48 2022 -0400
+
+    minor doc edits and readme update
+
+[33mcommit a6cb98b40413226c2e47a230c6112f0ba1bd3694[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Aug 1 16:06:48 2022 -0400
+
+    adding text to odum v ebase qmd
+
+[33mcommit b37791f514bc747a82064520d15f5ae05b497440[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Aug 1 15:54:59 2022 -0400
+
+    comparing EBASE and Odum with continuous 2012 Appalachicola data
+
+[33mcommit dc47e60510941a3b6e11a9b6f4e5d9622986f236[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue May 31 13:17:48 2022 -0400
+
+    change units for b, change troc to nstepd
+
+[33mcommit 490982989cb76713949f5bc785f534628a854766[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Mar 22 18:34:18 2022 -0400
+
+    working EBASE with three parameters maybe, fwoxy_comp and comp_plots updated
+
+[33mcommit 0ee8f72167dd8b7e6c55ad0ab926d3a69c5bef00[m[33m ([m[1;31morigin/jill[m[33m, [m[1;32mjill[m[33m)[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Feb 7 16:22:54 2022 -0500
+
+    fwoxy comp with ebased fixed b
+
+[33mcommit d56dd1939e470f761960b0b57673bbd95411dbdb[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Jan 13 08:25:55 2022 -0500
+
+    APNERR2012.RData uses water temp
+
+[33mcommit 2e6fbf9d0bf62e27a6a0ceeec46944d7c82c8a10[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 30 11:16:48 2021 -0500
+
+    readme update
+
+[33mcommit c994ef0939b9ba5a77129f03e9b952615f63164e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Nov 28 18:33:12 2021 -0500
+
+    ebase model update with u10 squared
+
+[33mcommit 5a59213b9d0b0f328857f11ba23b7a785575c4b8[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 16 17:13:58 2021 -0500
+
+    ebase added to comp_plots
+
+[33mcommit f1655c41bc5aad3d01ac513130374da8e11daeb2[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 15 17:36:25 2021 -0500
+
+    ebase applied to apa data
+
+[33mcommit 178efb60a5dfc9144c32826bfa0ecdf85e9a6998[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 15 16:37:13 2021 -0500
+
+    parameter comp for ebase added to fwoxy comp
+
+[33mcommit 2f53d48e67fc15c70c3f4bc4130df2a7de2d69ad[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 15 16:06:05 2021 -0500
+
+    ebase comp to fwoxy_comp
+
+[33mcommit 6b07fd657d2c1ab4b02e0317809c8100bf582e34[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Nov 4 13:57:04 2021 -0400
+
+    remove link from readme
+
+[33mcommit c996b9681ca8226f15050a89879715542d66e5e0[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Sep 10 09:53:17 2021 -0400
+
+    moving evalcor app to fawda123/evalcor-app
+
+[33mcommit c06b28ab7c25158f649f2e6c23fab13c6a00ae72[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Sep 10 09:34:21 2021 -0400
+
+    removed appalachicola content to nerrs-metabolism repo
+
+[33mcommit b7093bf2c966faafdb5328feefba09838e2dbf44[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Sep 9 17:29:48 2021 -0400
+
+    working eval cor app, need to deploy
+
+[33mcommit 7f0556066ca5b0824450065bd499fe5b9abc705e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Sep 9 14:40:18 2021 -0400
+
+    PAR in correct units for daily avg
+
+[33mcommit 7f3c3627f74fa6e3c32edd33d9d75d5ba585e446[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 26 13:46:17 2021 -0400
+
+    readme appalachicola link added
+
+[33mcommit 8e0804129a1c2d31025341d553f492296b8ad247[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 26 13:43:15 2021 -0400
+
+    more appalachicola tidal stuff
+
+[33mcommit c5848b728da092cf4aeaa9d5625d3e800968ca9d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 26 12:46:40 2021 -0400
+
+    app cat point eval with anoms by month and par explore
+
+[33mcommit 724d963341ab2e5090890a7c3acfc89a808054f5[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Aug 26 09:44:07 2021 -0400
+
+    resaving some apa data
+
+[33mcommit 9a29eaa5c35004154a7354197d0df69d4a7c2913[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Aug 25 18:13:26 2021 -0400
+
+    saving apa files
+
+[33mcommit 0959c8335fda54f43f6aff9f2369be73cc39fb4e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Aug 25 17:33:54 2021 -0400
+
+    working on exploring appalachicola
+
+[33mcommit 47ed5205b101feb6d5b559c9dd3291b2b2686e6f[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 19 10:32:20 2021 -0400
+
+    finished BASEmetab comp with fwoxy, readme update, moved scripts to R
+
+[33mcommit 2deeba017f41471f33610eeecae2bce3ea92ee98[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Jul 18 13:12:51 2021 -0400
+
+    working on fwoxy basemetab instantaneous results
+
+[33mcommit c7a497fc42ebb50a8204f33d35da6d4695b44c64[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Jul 18 10:46:34 2021 -0400
+
+    reknit fwoxy comp
+
+[33mcommit 0716b383ab4224d29813199db2580a49f02aaff3[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Jul 18 10:34:34 2021 -0400
+
+    reknit fwoxy comp
+
+[33mcommit ea4e6118f3ccbd5e8e0c8dd497873d7df5617545[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Jul 15 09:54:27 2021 -0400
+
+    fwoxy comp to rmd
+
+[33mcommit f0dd7da7d2a2c5bc1207e87f3effd2c97feb854e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Jul 13 18:05:18 2021 -0400
+
+    basemetab is volumetric, convert to areal, also fwoxy wtregdo output can match if I wasn't an idiot
+
+[33mcommit d17dd0a92efb94408f9b64c9531d89ce9feb9fd7[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Jul 7 16:44:10 2021 -0400
+
+    working on fwoxy comp with ecometab
+
+[33mcommit 95cc7c60f747505d593c76cd7ac5fd6ccd642f51[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jun 21 15:49:55 2021 -0400
+
+    readme update, starting fwoxy comp
+
+[33mcommit 5b4423ccc0e8a105b3fcc653b75494d05c513a76[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jun 21 08:37:50 2021 -0400
+
+    comp plot with p and theta estimated
+
+[33mcommit 439e905277c6ec202044f7c33f6cfb94c810d655[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Jun 3 09:47:06 2021 -0400
+
+    link to readme for io page
+
+[33mcommit 4b43348540553fe9a16ca4ce04a6cbdda652eb5d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Thu Jun 3 09:39:45 2021 -0400
+
+    comparison plots for apples to apple rmd
+
+[33mcommit d8f04db72a80408b9ea0ae245d11b40909fde96d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue May 25 18:53:40 2021 -0400
+
+    process by metab date
+
+[33mcommit 2ad44f01135adb0389042ea0bfaf24e845863829[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue May 25 16:43:58 2021 -0400
+
+    basemetab with empirical K
+
+[33mcommit 7abf5b2cf4d9b57b3a2fcbc1110ced0fd983e817[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon May 24 17:59:58 2021 -0400
+
+    data proc to script2
+
+[33mcommit 24ec849f3ab59e249c962512bdd27488e289095c[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon May 24 13:04:07 2021 -0400
+
+    added update chains option to stripped down basemetab
+
+[33mcommit 3cfe265e5144c82d4d6ec32f4e5704be3e835724[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jan 4 08:33:16 2021 -0500
+
+    method comp document added
+
+[33mcommit eaafcf8d312b84065fd8fe1673722730f2ae93a7[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Dec 21 16:31:06 2020 -0500
+
+    output from four day ex from ap is same between manual and package
+
+[33mcommit 09ee92b930b8196f6a43c8ee7a7b93b3f2536ceb[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Dec 21 16:13:22 2020 -0500
+
+    kpts, gppts, erpts now in single loop in jags model, fixed indentation in jags model
+
+[33mcommit 36e96198586ac212473a3444c13a734698984b3b[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Dec 21 16:06:10 2020 -0500
+
+    script.R yallakool ex matches BASEmetab orig if update.chains is false, pulled out do sat calculation from model
+
+[33mcommit 722db5c5b58c7dfe945bea0b37e6af3fa4e56cdf[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Dec 11 17:36:39 2020 -0500
+
+    script2 works locally now
+
+[33mcommit e77fe4f3196a58ec9c4295914c1259fb0144ce8d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Dec 11 09:28:15 2020 -0500
+
+    readme update with R file descriptions
+
+[33mcommit b7e7cce10b9dddfa7c58f6b08b59a7e6891f26e5[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 18 10:54:02 2020 -0500
+
+    correct again, save your shit
+
+[33mcommit cf9239249217dd64f15266e5febacb963570051e[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 18 10:53:36 2020 -0500
+
+    correct odum metab for comp on method_comp
+
+[33mcommit 6cf94fc1207f9e90507f0a26ba6628630914a377[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 18 10:13:24 2020 -0500
+
+    reprocess BASE with correct depth for AP cat
+
+[33mcommit f131c95f87c0c4c6a71602612e890a7a183d4463[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 18 08:46:16 2020 -0500
+
+    script2 with kvol using correct height for AP cat
+
+[33mcommit f2f19c0b582c83dfe626f1211301b7474115e82c[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 16 14:35:52 2020 -0500
+
+    additional BASEmetab plot for k out of the box
+
+[33mcommit 0d01c6d9a5a02245c51b39973cca67403ef504fe[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 16 14:21:37 2020 -0500
+
+    comparing odum and base using original base, k with small sd, not estimated
+
+[33mcommit 7fa9aff5044dfa4f13e7eedac9178990dfe4e175[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Nov 16 12:00:37 2020 -0500
+
+    workflow for regular BASEmetab, results for default and k.est = F for AP
+
+[33mcommit 44a6101c6be888f262ad8eb92f1eca6d088ea29c[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Nov 13 07:44:07 2020 -0500
+
+    water temp instead of air temp
+
+[33mcommit d80e17d2de2117fdc7567ff39e8aee8840d21b84[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 11 11:46:07 2020 -0500
+
+    revert back to original script and model file as parallel, no kwann
+
+[33mcommit 45e52fe88c299cc59d3f6b4c0b7b3695defef9a9[m[33m ([m[1;31morigin/wanninkhof[m[33m)[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Wed Nov 11 11:30:03 2020 -0500
+
+    removing temp correction does nothing
+
+[33mcommit 61ae940a70cc6d534267c615bc57ac4e7a5e9ff3[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 10 11:39:30 2020 -0500
+
+    remove temp correction for K
+
+[33mcommit da917358d841a795037a23ada2bc9bd59cda14cc[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 10 10:24:39 2020 -0500
+
+    outputpar saved as data object
+
+[33mcommit 518861133bae0b565318a7e2c5534487d9b10581[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 3 10:42:20 2020 -0500
+
+    do not multiply by interval for mean kwann output
+
+[33mcommit 1556dd4dc736b22c4b5ed8be8703fe896ae4938c[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Nov 3 07:17:49 2020 -0500
+
+    fix to depth vector, other minor mods
+
+[33mcommit 8897a938592bf2780e5194f35c4308eb7e45e21b[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sun Nov 1 13:57:34 2020 -0500
+
+    K to volumetric, per day, fix #1
+
+[33mcommit 0c6dd565bbb95a28c11458881ee258ac9db811c1[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Sat Oct 24 10:16:59 2020 -0400
+
+    minor change to comp plot output
+
+[33mcommit df76828f24fc05a63fffa6a3dbb6358b5d2a9f32[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Oct 23 15:23:38 2020 -0400
+
+    added odum comparisons to method_comp
+
+[33mcommit a815130d9608ce3813bdb4f7f4721486dc60826a[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Oct 23 15:05:07 2020 -0400
+
+    added method_comp script for quick comparison
+
+[33mcommit db5c804e45689532f44bf3f85198f3bb7f7ba019[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 20 15:29:18 2020 -0400
+
+    adding optimal detided data for APNERR2012
+
+[33mcommit 39c4a431176279884a66f4129415a5e31e14c214[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 20 13:38:45 2020 -0400
+
+    working version for full apnerr 2012 data, parallel with whanninkof
+
+[33mcommit fe23169bcdf3c4db88b1320c6889f7f12bdf6573[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Oct 19 17:14:56 2020 -0400
+
+    bayes wanninkhof must have no NA values, serial is same as parallel
+
+[33mcommit eb14c914a1d59b1523b702edd1e370c77c5139af[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Oct 19 09:47:08 2020 -0400
+
+    maybe working version of wanninkhoff deterministic calc for apnerr
+
+[33mcommit 100231ba9a25f5ff549f1dec08affbed96303200[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Fri Oct 16 17:30:56 2020 -0400
+
+    apnerr prepped I think for basemetab
+
+[33mcommit 60adaef982e3e3638968a79f7e6a537c65f12e27[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 13 17:32:55 2020 -0400
+
+    added parallel processing for BASEmetab, need to make sure it works, added dat proc folder for eventual data prep with AP
+
+[33mcommit 49830cbbb719753cb065e3cc2b25785d9b89f5d7[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Tue Oct 13 15:51:13 2020 -0400
+
+    placeholder for empirical K
+
+[33mcommit 3dbd0b54f55246b97c1d79c399e4d218fe049d53[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 27 14:23:03 2020 -0400
+
+    added another section
+
+[33mcommit 235ad2d77bb347371e593de5f3dc0bd6ad43fe9d[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 27 14:13:15 2020 -0400
+
+    bare script finished
+
+[33mcommit b3eaf6acce8512162e3799bc905a5ddaa44d27d1[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 27 13:10:58 2020 -0400
+
+    working on core extraction
+
+[33mcommit e7cb21bfefbeaa2f54541ce27630e2e75c136a7b[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 27 12:39:36 2020 -0400
+
+    rprojified
+
+[33mcommit 0a1c92de5870ac9ae150aedab0e26b1c59bee697[m
+Author: fawda123 <mbafs2012@gmail.com>
+Date:   Mon Jul 27 12:37:55 2020 -0400
+
+    first commit

@@ -102,7 +102,8 @@ grd <- crossing(
 
 str <- Sys.time()
 
-for(i in 1:39){#nrow(grd)){
+# takes about 20 hours
+for(i in 1:nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')
@@ -136,9 +137,6 @@ save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
 # evaluate fit --------------------------------------------------------------------------------
 
 load(file = here('data/apagrd.RData'))
-
-grd <- apagrd %>% 
-  select(-out)
 
 # summary function for r2, rmse, and ave diff
 sumfun <- function(x){

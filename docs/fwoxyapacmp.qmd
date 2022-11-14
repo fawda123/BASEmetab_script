@@ -57,7 +57,7 @@ fwdatcmp <- fwdat %>%
 
 ## Overview
 
-This page describes a sensitivity analysis of [EBASE](https://fawda123.github.io/EBASE/index.html) to estimate metabolic rates and parameters using a time series with known inputs. The known time series used field-derived data from Apalachicola Bay to simulate a time series using a forward oxygen mass balance model from [Fwoxy](https://github.com/jmarriola/fwoxy).
+This page describes a sensitivity analysis of [EBASE](https://fawda123.github.io/EBASE/index.html) to estimate metabolic rates and parameters using a time series with known inputs. The known time series used field-derived data from Apalachicola Bay to simulate data using a forward oxygen mass balance model from [Fwoxy](https://github.com/jmarriola/fwoxy).
 
 The sensitivity analysis evaluated three different prior distributions for the $a$, $r$, and $b$ parameters in the equation below.  Model optimization periods were also compared using one and seven days for each combination of prior distributions. 
 
@@ -65,13 +65,13 @@ $$
 \frac{\delta{C_d}}{\delta{t}} = [\,aPAR]\, - [\,r]\, - \frac{1}{H}\left[-bU_{10}^2\left(\frac{s_c}{600} \right)^{-0.5} \left(C_{Sat} - C_d \right )\right]
 $$
 
-Each prior distribution was varied using a different standard deviation varying from small to large to test the effect of more and less constrained ranges, respectively, on the priors.  The default prior distributions for EBASE are as follows, where the standard deviations for $a$, $r$, and $b$ are 0.1, 5, and 0.01: 
+Each prior distribution was varied using a different standard deviation varying from small to large to test the effect of more or less constrained ranges, respectively, on the priors.  The default prior distributions for EBASE are as follows, where the standard deviations for $a$, $r$, and $b$ are 0.1, 5, and 0.01: 
 
 ```{r}
 prior_plot()
 ```
 
-A total of `r nrow(apasumdat)` combinations for each of two optimization periods were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the priors varied by orders of magnitude (10%, 100%, and 1000%) from the default values.
+A total of `r nrow(apasumdat)` combinations for each of two optimization periods were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the priors varied by orders of magnitude (10%, 100% [default], and 1000%) from the default values. Any prior indicating "M" is the default value. 
 
 ```{r}
 apasumdat %>% 
@@ -85,10 +85,10 @@ apasumdat %>%
   unite('asd', asd, asdf, sep = ' ') %>% 
   unite('rsd', rsd, rsdf, sep = ' ') %>% 
   unite('bsd', bsd, bsdf, sep = ' ') %>% 
-  kable()
+  kable(col.names = c('a (sd)', 'r (sd)', 'b (sd)'))
 ```
 
-The output from EBASE for each combination of prior distributions was compared to the known values from the simulated time series. 
+The output from EBASE for each combination of prior distributions was compared to the known values from the simulated time series. Note that the $b$ parameter is fixed and estimated from $k_w$, $U^2_{10}$, and $s_c$.
 
 ```{r}
 ebase_plot(fwdatcmp, instantaneous = F)
@@ -126,7 +126,7 @@ ggplot(fwdatcmp, aes(x = DateTimeStamp, y = b)) +
 
 ## Comparisons
 
-The following shows a summary of the model output for each unique combination of prior distributions and two optimization periods of one and seven days for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE, for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  This applies to $Rt_{vol}$ and $a$.
+The following shows a summary of the model output for each unique combination of prior distributions and two optimization periods of one and seven days for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE, for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated because it is constant throughout the time series and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  The latter applies to $Rt_{vol}$ and $a$.  Warmer colors indicate lower R$^2$ and higher RMSE, or reduced similarities. 
 
 ### R-squared
 
@@ -146,16 +146,16 @@ priorcomp(apasumdat, 2)
 
 ## Conclusions
 
-Several conclusions can be made from the sensitivity analysis regarding the ability of EBASE to simulate the known parameters from the simulated Fwoxy time series.  These are based on identified patterns in the R$^2$ and RMSE estimates for different combinations of the priors.
+Several conclusions can be made from the sensitivity analysis regarding the ability of EBASE to estimate the known parameters from the simulated Fwoxy time series.  These are based on identified patterns in the R$^2$ and RMSE estimates for different combinations of the priors.
 
-* Parameters estimates are minimally influenced by changes in the variance of the $a$ parameter.  
-* Lower variance of the $r$ prior distribution contributed to lower R$^2$ and higher RMSE values for all parameters, the fit was worsened with a longer optimization period (e.g, lower R$^2$ for the $a$ parameter and higher RMSE for Pg$_{vol}$ at seven day optimization)
+* Parameter estimates for $a$ are minimally influenced by changes in the variance of the priors  
+* Lower variance of the $r$ prior distribution contributed to lower R$^2$ and higher RMSE values for all parameters, the fit was worse with a longer optimization period (e.g, lower R$^2$ for the $a$ parameter and higher RMSE for Pg$_{vol}$ at seven day optimization)
 * Higher variance of the $b$ prior distribution contributed to lower R$^2$ and higher RMSE values for most parameters (e.g., lower R$^2$ and higher RMSE for D)
 * Longer optimization period generally improved fits in parameter estimates, with some exceptions noted above
 
 Recommendation:
 
-* The default prior distributions for the parameters may be appropriate in some cases, but increasing the variance for $a$ and $r$ and decreasing the variance for $b$ produces more optimal solutions.  The top three optimal solutions based on maximum average R$^2$ or minimum average RMSE are as follows for each optimization period.
+* The default prior distributions for the parameters may be appropriate in some cases, but increasing the variance for $a$ and $r$ and decreasing the variance for $b$ produces more optimal solutions.  The top three optimal solutions based on maximum average R$^2$ or minimum average RMSE are as follows for each optimization period, where the top three combinations for each are shown below.
 
 ```{r}
 optest <- apasumdat %>% 
@@ -185,19 +185,19 @@ optest <- apasumdat %>%
   ) %>% 
   arrange(ndays)
 
-kable(optest)
+kable(optest, col.names = c('a (sd)', 'r (sd)', 'b (sd)', 'ndays', 'Ave. R2', 'Ave. RMSE', 'R2 rank', 'RMSE rank'))
 ```
 
 Result comparisons at the time step of the optimization period are shown for different examples of the optimal prior distributions from above. 
 
-### asd = 1, rsd = 50, bsd = 0.001, ndays = 1
+### a (sd) = 1, r (sd) = 50, b (sd) = 0.001, ndays = 1
 
 ```{r}
 #| fig-height: 13
 optex(apagrd, fwdatcmp, asdin = 1, rsdin = 50, bsdin = 0.001, ndaysin = 1)
 ```
 
-### asd = 0.01, rsd = 50, bsd = 0.001, ndays = 7
+### a (sd) = 0.01, r (sd) = 50, b (sd) = 0.001, ndays = 7
 
 ```{r}
 #| fig-height: 13

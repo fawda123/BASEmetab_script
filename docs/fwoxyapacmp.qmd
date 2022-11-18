@@ -1,5 +1,5 @@
 ---
-title: "EBASE sensititivity analysis"
+title: "EBASE sensitivity analysis"
 author: 
   - name: Dr. Marcus Beck, <mbeck@tbep.org>
 institute: "Tampa Bay Estuary Program"

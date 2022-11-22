@@ -21,7 +21,7 @@ fwdatcmp <- fwdat %>%
     Rt_vol = `er,mmol/m2/d` / `ht,m`,
     Pg_vol = `gpp,mmol/m2/d` / `ht,m`,
     D = -1 * `gasex,mmol/m2/d` / `ht,m`,
-    b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 600) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
+    b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 660) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
   ) %>% 
   select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
 

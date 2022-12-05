@@ -86,7 +86,7 @@ fwdatinp <- fwdat %>%
 #     strip.background = element_blank()
 #   )
 
-# gridded comparison --------------------------------------------------------------------------
+# gridded comparisons, sd only ----------------------------------------------------------------
 
 # this takes about ten hours to run
 grd <- crossing(
@@ -134,7 +134,8 @@ for(i in 1:nrow(grd)){
 apagrd <- grd
 save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
 
-# evaluate fit --------------------------------------------------------------------------------
+
+# evaluate fit, sd only -----------------------------------------------------------------------
 
 load(file = here('data/apagrd.RData'))
 
@@ -211,5 +212,132 @@ apasumdat <- apagrd %>%
   select(-out)
 
 save(apasumdat, file = here('data/apasumdat.RData'), compress = 'xz')
+
+# gridded comparison, b mean changes ----------------------------------------------------------
+
+# this takes about ten hours to run
+grd <- crossing(
+  amean = 0.2, #c(0, 0.2, 2),
+  asd = 0.1,
+  rmean = 20, #c(0, 20, 200), 
+  rsd = 5, 
+  bmean = c(0.1255, 0.251, 0.502), # 0.251 / 2, 0.251, 0.251 * 2
+  bsd = c(0.001, 0.01, 0.1),
+  ndays = c(1, 7),
+  out = NA
+)
+
+str <- Sys.time()
+
+# takes about 20 hours
+for(i in 1:nrow(grd)){
+  
+  # counter
+  cat(i, 'of', nrow(grd), '\n')
+  print(Sys.time() - str)
+  
+  # get inputs
+  selrow <- grd[i, ]
+  aprior <- c(selrow$amean, selrow$asd)
+  rprior <- c(selrow$rmean, selrow$rsd)
+  bprior <- c(selrow$bmean, selrow$bsd)
+  ndays <- c(selrow$ndays)
+  
+  # run model for inputs
+  cl <- makeCluster(6)
+  registerDoParallel(cl)
+  
+  # use interp for missing values
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+  
+  stopCluster(cl)
+  
+  # append output to grd
+  grd$out[[i]] <- list(res)
+  
+}
+
+apagrdmean <- grd
+save(apagrdmean, file = 'data/apagrdmean.RData', compress = 'xz')
+
+# evaluate fit, b mean changes ----------------------------------------------------------------
+
+load(file = here('data/apagrdmean.RData'))
+
+# summary function for r2, rmse, and ave diff
+sumfun <- function(x){
+  
+  # r2
+  r2 <- lm(EBASE ~ Fwoxy, x) %>% 
+    summary() %>% 
+    .$r.squared
+  r2 <- 100 * r2
+  
+  # rmse
+  rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
+  
+  # aved
+  ts1 <- sum(x$EBASE, na.rm = TRUE)
+  ts2 <- sum(x$Fwoxy, na.rm = TRUE)
+  
+  aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
+  
+  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
+  
+  return(out)
+  
+}
+
+apasumdatmean <- apagrdmean %>% 
+  mutate(
+    ind = 1:nrow(.),
+    ests = purrr::pmap(list(ind, out), function(ind, out){
+      
+      cat(ind, '\t')
+      
+      cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
+        select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
+        rename(
+          DO_mod.x = DO_obs.x,
+          DO_mod.y = DO_mod
+        ) %>%
+        pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>%
+        separate(var, c('var', 'mod'), sep = '\\.') %>%
+        mutate(
+          mod = case_when(
+            mod == 'x' ~ 'Fwoxy',
+            mod == 'y' ~ 'EBASE'
+          )
+        ) %>%
+        pivot_wider(names_from = 'mod', values_from = 'val')
+      
+      sumgrp <- cmp %>% 
+        filter(var %in% c('a', 'Rt_vol', 'b')) %>% 
+        group_by(grp, var) %>% 
+        summarise(
+          Fwoxy = mean(Fwoxy, na.rm = T), 
+          EBASE = mean(EBASE, na.rm = T), 
+          .groups = 'drop'
+        ) 
+      sumtms <- cmp %>% 
+        filter(!var %in% c('a', 'Rt_vol', 'b'))
+      
+      sumcmp <- bind_rows(sumgrp, sumtms) %>% 
+        group_by(var) %>% 
+        nest() %>% 
+        summarise(
+          est = purrr::map(data, sumfun)
+        ) %>% 
+        unnest('est')
+      
+      return(sumcmp)
+      
+    })
+  ) %>% 
+  select(-out)
+
+save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
+
 
 

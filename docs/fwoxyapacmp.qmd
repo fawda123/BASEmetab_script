@@ -32,7 +32,9 @@ library(lubridate)
 source(here('R/funcs.R'))
 
 load(file = here('data/apasumdat.RData'))
+load(file = here('data/apasumdatmean.RData'))
 load(file = here('data/apagrd.RData'))
+load(file = here('data/apagrdmean.RData'))
 
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
@@ -59,19 +61,21 @@ fwdatcmp <- fwdat %>%
 
 This page describes a sensitivity analysis of [EBASE](https://fawda123.github.io/EBASE/index.html) to estimate metabolic rates and parameters using a time series with known inputs. The known time series used field-derived data from Apalachicola Bay to simulate data using a forward oxygen mass balance model from [Fwoxy](https://github.com/jmarriola/fwoxy).
 
-The sensitivity analysis evaluated three different prior distributions for the $a$, $r$, and $b$ parameters in the equation below.  Model optimization periods were also compared using one and seven days for each combination of prior distributions. 
+The sensitivity analysis included two separate evaluations.  The first evaluated three different prior distributions that assessed changes in the standad deviation for the $a$, $r$, and $b$ parameters in the equation below.  The second evaluated three different prior distributions for the $b$ parameter only Model optimization periods were also compared using one and seven days for each combination of prior distributions. 
 
 $$
 \frac{\delta{C_d}}{\delta{t}} = [\,aPAR]\, - [\,r]\, - \frac{1}{H}\left[-bU_{10}^2\left(\frac{s_c}{600} \right)^{-0.5} \left(C_{Sat} - C_d \right )\right]
 $$
 
-Each prior distribution was varied using a different standard deviation varying from small to large to test the effect of more or less constrained ranges, respectively, on the priors.  The default prior distributions for EBASE are as follows, where the standard deviations for $a$, $r$, and $b$ are 0.1, 5, and 0.01: 
+The default prior distributions for EBASE are as follows, where the standard deviations for $a$, $r$, and $b$ are 0.1, 5, and 0.01: 
 
 ```{r}
 prior_plot()
 ```
 
-A total of `r nrow(apasumdat)` combinations for each of two optimization periods were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the priors varied by orders of magnitude (10%, 100% [default], and 1000%) from the default values. Any prior indicating "M" is the default value. 
+### Analysis 1
+
+Each prior distribution was varied for $a$, $r$, and $b$ by using a different standard deviation from small to large to test the effect of more or less constrained ranges, respectively, on the priors. A total of `r nrow(apasumdat)` combinations for each of two optimization periods were evaluated, where the "low", "medium", or "high" ranges on the standard deviations for the priors varied by orders of magnitude (10%, 100% [default], and 1000%) from the default values. Any prior indicating "M" is the default value. 
 
 ```{r}
 apasumdat %>% 
@@ -88,7 +92,27 @@ apasumdat %>%
   kable(col.names = c('a (sd)', 'r (sd)', 'b (sd)'))
 ```
 
-The output from EBASE for each combination of prior distributions was compared to the known values from the simulated time series. Note that the $b$ parameter is fixed and estimated from $k_w$, $U^2_{10}$, and $s_c$.
+### Analysis 2
+
+The prior distribution for only the $b$ parameter was varied by changing both the mean and standard deviation values. This additional analysis was done to determine if the fixed $b$ parameter could be recovered with priors that are outside of the range of the actual value.  Nine combinations were evaluated based on three different values for the mean (50% of the default, default, and 200% of the default) and three different values for the standard deviation (10% of the default, default, and 1000% of the default).  The default values in EBASE for the prior distributions of $a$ and $r$ were used. As before, one day and seven day optimization periods were also evaluated.   
+
+```{r}
+apasumdatmean %>% 
+  filter(ndays == 1) %>% 
+  select(bmean, bsd) %>% 
+  unique() %>% 
+  mutate(
+    bmeanf = paste0('(', factor(bmean, labels = c('L', 'M', 'H')), ')'),
+    bsdf = paste0('(', factor(bsd, labels = c('L', 'M', 'H')), ')')
+  ) %>% 
+  unite('bmean', bmean, bmeanf, sep = ' ') %>% 
+  unite('bsd', bsd, bsdf, sep = ' ') %>%
+  kable(col.names = c('b (mean)', 'b (sd)'))
+```
+
+### Evaluating the output
+
+The output from EBASE for each analysis and combination of prior distributions was compared to the known values from the simulated time series. Note that the $b$ parameter is fixed and estimated from $k_w$, $U^2_{10}$, and $s_c$.
 
 ```{r}
 ebase_plot(fwdatcmp, instantaneous = F)
@@ -126,9 +150,11 @@ ggplot(fwdatcmp, aes(x = DateTimeStamp, y = b)) +
 
 ## Comparisons
 
+### Analysis 1
+
 The following shows a summary of the model output for each unique combination of prior distributions and two optimization periods of one and seven days for the simulated time series.  The comparisons show the difference, evaluated as R$^2$ or RMSE, for each parameter from EBASE relative to those from Fwoxy.  Note that the $b$ parameter is not evaluated because it is constant throughout the time series and parameters that are returned as a single estimate for the optimization period of the model were compared to the average parameter from Fwoxy for the same optimization period.  The latter applies to $Rt_{vol}$ and $a$.  Warmer colors indicate lower R$^2$ and higher RMSE, or reduced similarities. 
 
-### R-squared
+#### R-squared
 
 ```{r}
 #| fig-height: 9
@@ -136,7 +162,7 @@ The following shows a summary of the model output for each unique combination of
 priorcomp(apasumdat, 1)
 ```
 
-### RMSE
+#### RMSE
 
 ```{r}
 #| fig-height: 9
@@ -144,7 +170,45 @@ priorcomp(apasumdat, 1)
 priorcomp(apasumdat, 2)
 ```
 
+### Analysis 2
+
+#### R-squared
+
+```{r}
+#| fig-height: 4.5
+#| fig-width: 8
+priorcompmean(apasumdatmean, 1)
+```
+
+#### RMSE
+
+```{r}
+#| fig-height: 4.5
+#| fig-width: 8
+priorcompmean(apasumdatmean, 2)
+```
+
+#### b only
+
+A summary of the $b$ parameter for different priors for each time step and optimization period.
+
+```{r}
+#| fig-height: 9
+#| fig-width: 11
+optexmean(apagrdmean)
+```
+
+Same results as above, but $b$ is summarized as the average and 95% confidence interval across the time series for each prior combination.
+
+```{r}
+#| fig-height: 7
+#| fig-width: 8
+optexmeansum(apagrdmean)
+```
+
 ## Conclusions
+
+### Analysis 1
 
 Several conclusions can be made from the sensitivity analysis regarding the ability of EBASE to estimate the known parameters from the simulated Fwoxy time series.  These are based on identified patterns in the R$^2$ and RMSE estimates for different combinations of the priors.
 
@@ -190,18 +254,38 @@ kable(optest, col.names = c('a (sd)', 'r (sd)', 'b (sd)', 'ndays', 'Ave. R2', 'A
 
 Result comparisons at the time step of the optimization period are shown for different examples of the optimal prior distributions from above. 
 
-### a (sd) = 1, r (sd) = 50, b (sd) = 0.001, ndays = 1
+#### a (sd) = 1, r (sd) = 50, b (sd) = 0.001, ndays = 1
 
 ```{r}
 #| fig-height: 13
 optex(apagrd, fwdatcmp, asdin = 1, rsdin = 50, bsdin = 0.001, ndaysin = 1)
 ```
 
-### a (sd) = 0.01, r (sd) = 50, b (sd) = 0.001, ndays = 7
+#### a (sd) = 0.01, r (sd) = 50, b (sd) = 0.001, ndays = 7
 
 ```{r}
 #| fig-height: 13
 optex(apagrd, fwdatcmp, asdin = 0.01, rsdin = 50, bsdin = 0.001, ndaysin = 7)
+```
+
+### Analysis 2
+
+Higher values for the mean of the $b$ prior distribution parameter generally produce less precise parameter estimates, especally for $Rt_{vol}$ and $a$.  This effect is mitigated with a larger value for the standard deviation of the prior distribution.  All of these issues are negligible for a longer optimization period.
+
+For fun, here's what the model results for EBASE look like compared to Fwoxy using very uninformed priors (high standard deviation for all).
+
+#### a (sd) = 1, r (sd) = 50, b (sd) = 0.1, ndays = 1
+
+```{r}
+#| fig-height: 13
+optex(apagrd, fwdatcmp, asdin = 1, rsdin = 50, bsdin = 0.1, ndaysin = 1)
+```
+
+#### a (sd) = 1, r (sd) = 50, b (sd) = 0.1, ndays = 7
+
+```{r}
+#| fig-height: 13
+optex(apagrd, fwdatcmp, asdin = 1, rsdin = 50, bsdin = 0.1, ndaysin = 7)
 ```
 
 :::

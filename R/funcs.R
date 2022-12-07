@@ -70,20 +70,20 @@ getsec <- function(x){
   
 }
 
-# Fwoxy apa comparison to EBASE for different priors
-priorcomp <- function(apasumdat, ind){
+# Fwoxy apa comparison to EBASE for different priors sd only
+priorcomp <- function(dat, ind){
   
   met <- tibble(
     lbs = c('r2', 'rmse', 'aved'),
     lbspr = c('R^2', 'RMSE', 'Ave.\nDiff.'), 
     direc = c(-1, 1, 1)
   )
-  
+
   toshw <- met$lbs[ind]
   leglb <- met$lbspr[ind]
   direc <- met$direc[ind]
 
-  toplo <- apasumdat %>% 
+  toplo <- dat %>% 
     select(-amean, -rmean, -bmean) %>% 
     unnest('ests') %>% 
     select(ndays, asd, rsd, bsd, var, matches(toshw)) %>%
@@ -155,9 +155,108 @@ priorcomp <- function(apasumdat, ind){
       strip.text = element_text(hjust = 0, size = 12, face = 'bold')
     ) + 
     facet_wrap(~ndays, ncol = 2) + 
-    scale_fill_distiller(palette = 'YlOrRd', direction = direc) + 
+    scale_fill_distiller(palette = 'YlOrRd', direction = direc, limits = c(0, 100)) + 
     scale_x_discrete(position = 'top', expand = c(0, 0), labels = parse(text = levels(toplo2$var))) + 
     scale_y_reverse(expand = c(0, 0)) + 
+    labs(
+      y = NULL, 
+      fill = parse(text = leglb),
+      x = 'Parameter from EBASE vs Fwoxy'
+    )
+
+  out <- p1 + p2 + plot_layout(ncol = 2, widths = c(0.3, 1))
+  
+  return(out)
+  
+}
+
+# Fwoxy apa comparison to EBASE for different priors, b mean and sd changes only
+priorcompmean <- function(dat, ind){
+  
+  met <- tibble(
+    lbs = c('r2', 'rmse', 'aved'),
+    lbspr = c('R^2', 'RMSE', 'Ave.\nDiff.'), 
+    direc = c(-1, 1, 1)
+  )
+  
+  toshw <- met$lbs[ind]
+  leglb <- met$lbspr[ind]
+  direc <- met$direc[ind]
+
+  toplo <- dat %>% 
+    select(-amean, -asd, -rmean, -rsd) %>% 
+    unnest('ests') %>% 
+    select(ndays, bmean, bsd, var, matches(toshw)) %>%
+    filter(!var %in% 'b') %>%
+    pivot_wider(names_from = 'var', values_from = !!toshw) %>% 
+    mutate(
+      ind = sort(rep(1: (nrow(.) / 2), times = 2)), 
+      ndays = case_when(
+        ndays == 1 ~ paste(ndays, 'day'), 
+        T ~ paste(ndays, 'days')
+      )
+    )
+  
+  toplo1 <- toplo %>% 
+    select(ind, bmean, bsd) %>% 
+    unique() %>% 
+    mutate(
+      def = case_when(
+        bmean == 0.251 & bsd == 0.01 ~ '*', 
+        T ~ ''
+      ),
+      bmean = factor(bmean, labels = c('L', 'M', 'H')),
+      bsd = factor(bsd, labels = c('L', 'M', 'H'))
+    ) %>% 
+    pivot_longer(-c('ind', 'def'), names_to = 'var', values_to = 'val') %>% 
+    mutate(
+      var = factor(var, 
+                   levels = c('bmean', 'bsd'), 
+                   labels = c('mean', 'sd'))
+    ) 
+  
+  toplo2 <- toplo %>% 
+    select(-bmean, -bsd) %>%
+    pivot_longer(-c(ind, ndays), names_to = 'var', values_to = 'val') %>% 
+    mutate(
+      var = factor(var, 
+                   levels = c('DO_mod', 'Pg_vol', 'Rt_vol', 'D', 'a'), 
+                   labels = c('DO [mod]', 'Pg [vol]', 'Rt [vol]', 'D', 'a')
+      )
+    )
+  
+  p1 <- ggplot(toplo1, aes(y = ind, x = var, fill = val)) + 
+    geom_tile(color = 'black') + 
+    theme(
+      axis.text.x = element_text(size = 12), 
+      axis.text.y = element_text(size = 12),
+      axis.ticks = element_blank(), 
+      legend.position = 'left', 
+      legend.title = element_blank()
+    ) + 
+    scale_fill_brewer(palette = 'Greys') + 
+    scale_x_discrete(position = 'top', expand = c(0, 0)) + 
+    scale_y_reverse(expand = c(0, 0), breaks = toplo1$ind, labels = toplo1$def) + 
+    labs(
+      y = NULL, 
+      x = 'b prior',
+      caption = '* EBASE default'
+    )
+  
+  p2 <- ggplot(toplo2, aes(y = ind, x = var, fill = val)) + 
+    geom_tile(color = 'black') + 
+    theme(
+      axis.text.x = element_text(face = 'italic', size = 12), 
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(), 
+      legend.position = 'right', 
+      strip.background = element_blank(), 
+      strip.text = element_text(hjust = 0, size = 12, face = 'bold')
+    ) + 
+    facet_wrap(~ndays, ncol = 2) + 
+    scale_fill_distiller(palette = 'YlOrRd', direction = direc, limits = c(0, 100)) + 
+    scale_x_discrete(position = 'top', expand = c(0, 0), labels = parse(text = levels(toplo2$var))) + 
+    scale_y_reverse(expand = c(0, 0)) +
     labs(
       y = NULL, 
       fill = parse(text = leglb),
@@ -298,5 +397,161 @@ sumfun <- function(x){
   out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
   
   return(out)
+  
+}
+
+# plot comparison of b for changing mean and sd
+optexmean <- function(dat){
+  
+  toplo <- dat %>% 
+    unnest('out') %>% 
+    mutate(
+      out = purrr::map(out, function(x){
+        
+        x %>% 
+          group_by(grp) %>% 
+          summarise(
+            Date = min(Date),
+            EBASE = mean(b), 
+            .groups = 'drop'
+          ) %>% 
+          mutate(
+            Fwoxy = 0.251
+          )
+        
+      })
+    ) %>% 
+    unnest('out') %>% 
+    select(ndays, bmean, bsd, Date, EBASE, Fwoxy) %>% 
+    mutate(
+      bmean = factor(bmean, labels = paste('mean:', c('L', 'M', 'H'))),
+      bsd = factor(bsd, labels = paste('sd:', c('L', 'M', 'H')))
+    ) %>% 
+    pivot_longer(c(EBASE, Fwoxy), names_to = 'model', values_to = 'est') %>% 
+    na.omit()
+  
+  toplo1 <- toplo %>% 
+    filter(ndays == 1)
+  
+  toplo2 <- toplo %>% 
+    filter(ndays == 7)
+  
+  thm <- theme_bw() + 
+    theme(
+      strip.placement = 'outside', 
+      strip.background = element_blank(), 
+      legend.position = 'top', 
+      legend.title = element_blank(), 
+      strip.text = element_text(size = rel(1)), 
+      axis.text.x = element_text(size = 8)
+    ) 
+  
+  p1 <- ggplot(toplo1, aes(x = Date, y = est, color = model)) +
+    geom_line() +
+    geom_point() +
+    facet_grid(bmean ~ bsd) + 
+    thm + 
+    labs(
+      x = NULL, 
+      y = expression(paste('b (cm ', hr^-1, ') / ( ', m^2 ~ s^-2, ')')), 
+      title = 'ndays = 1'
+    )
+  
+  p2 <- ggplot(toplo2, aes(x = Date, y = est, color = model)) +
+    geom_line() +
+    geom_point() +
+    facet_grid(bmean ~ bsd) + 
+    thm +
+    labs(
+      x = NULL, 
+      y = expression(paste('b (cm ', hr^-1, ') / ( ', m^2 ~ s^-2, ')')), 
+      title = 'ndays = 7'
+    )
+  
+  p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'bottom')
+  
+  return(p)
+  
+}
+
+optexmeansum <- function(dat){
+  
+  toplo <- dat %>% 
+    unnest('out') %>% 
+    mutate(
+      out = purrr::map(out, function(x){
+        
+        x %>% 
+          group_by(grp) %>% 
+          summarise(
+            Date = min(Date),
+            EBASE = mean(b), 
+            .groups = 'drop'
+          ) %>% 
+          mutate(
+            Fwoxy = 0.251
+          )
+        
+      })
+    ) %>% 
+    unnest('out') %>% 
+    select(ndays, bmean, bsd, Date, EBASE, Fwoxy) %>% 
+    mutate(
+      bmean = factor(bmean, labels = paste('mean:', c('L', 'M', 'H'))),
+      bsd = factor(bsd, labels = paste('sd:', c('L', 'M', 'H')))
+    ) %>% 
+    pivot_longer(c(EBASE, Fwoxy), names_to = 'model', values_to = 'est') %>% 
+    na.omit() %>% 
+    group_by(ndays, bmean, bsd, model) %>% 
+    summarise(
+      avev = mean(est), 
+      hiv = ifelse(model == 'EBASE', t.test(est)$conf.int[2], est),
+      lov = ifelse(model == 'EBASE', t.test(est)$conf.int[1], est), 
+      .groups = 'drop'
+    ) %>% 
+    unique()
+  
+  toplo1 <- toplo %>% 
+    filter(ndays == 1)
+  
+  toplo2 <- toplo %>% 
+    filter(ndays == 7)
+  
+  thm <- theme_bw() +
+    theme(
+      axis.text.x = element_blank(), 
+      axis.ticks.x = element_blank(), 
+      strip.background = element_blank(), 
+      axis.title.x = element_blank(), 
+      legend.position  = 'bottom', 
+      panel.grid.major.x = element_blank(), 
+      panel.grid.minor.x = element_blank()
+    )
+  
+  p1 <- ggplot(toplo1, aes(x = 1, y = avev, color = model)) + 
+    geom_point() + 
+    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0) +
+    facet_wrap(~bsd + bmean, ncol = 9, strip.position = 'bottom') + 
+    thm +
+    labs(
+      color = NULL,
+      y = expression(paste('b (cm ', hr^-1, ') / ( ', m^2 ~ s^-2, ')')), 
+      title = 'ndays = 1'
+    )
+  
+  p2 <- ggplot(toplo2, aes(x = 1, y = avev, color = model)) + 
+    geom_point() + 
+    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0) +
+    facet_wrap(~bsd + bmean, ncol = 9, strip.position = 'bottom') + 
+    thm +
+    labs(
+      color = NULL,
+      y = expression(paste('b (cm ', hr^-1, ') / ( ', m^2 ~ s^-2, ')')), 
+      title = 'ndays = 1'
+    )
+  
+  p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'bottom')
+  
+  return(p)
   
 }

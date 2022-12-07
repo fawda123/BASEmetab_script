@@ -276,3 +276,27 @@ optex <- function(apagrd, fwdatcmp, asdin, rsdin, bsdin, ndaysin){
   p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'top')
   
 }
+
+# summary function for r2, rmse, and ave diff, used in fwoxyapacmp.R
+sumfun <- function(x){
+  
+  # r2
+  r2 <- lm(EBASE ~ Fwoxy, x) %>% 
+    summary() %>% 
+    .$r.squared
+  r2 <- 100 * r2
+  
+  # rmse
+  rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
+  
+  # aved
+  ts1 <- sum(x$EBASE, na.rm = TRUE)
+  ts2 <- sum(x$Fwoxy, na.rm = TRUE)
+  
+  aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
+  
+  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
+  
+  return(out)
+  
+}

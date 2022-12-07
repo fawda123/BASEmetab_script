@@ -8,6 +8,8 @@ library(doParallel)
 library(ggplot2)
 library(patchwork)
 
+source(file = here('R/funcs.R'))
+
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
 # fwoxy for comparison
@@ -139,30 +141,6 @@ save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
 
 load(file = here('data/apagrd.RData'))
 
-# summary function for r2, rmse, and ave diff
-sumfun <- function(x){
-  
-  # r2
-  r2 <- lm(EBASE ~ Fwoxy, x) %>% 
-    summary() %>% 
-    .$r.squared
-  r2 <- 100 * r2
-  
-  # rmse
-  rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
-  
-  # aved
-  ts1 <- sum(x$EBASE, na.rm = TRUE)
-  ts2 <- sum(x$Fwoxy, na.rm = TRUE)
-  
-  aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
-  
-  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
-  
-  return(out)
-  
-}
-
 apasumdat <- apagrd %>% 
   mutate(
     ind = 1:nrow(.),
@@ -264,30 +242,6 @@ save(apagrdmean, file = 'data/apagrdmean.RData', compress = 'xz')
 # evaluate fit, b mean changes ----------------------------------------------------------------
 
 load(file = here('data/apagrdmean.RData'))
-
-# summary function for r2, rmse, and ave diff
-sumfun <- function(x){
-  
-  # r2
-  r2 <- lm(EBASE ~ Fwoxy, x) %>% 
-    summary() %>% 
-    .$r.squared
-  r2 <- 100 * r2
-  
-  # rmse
-  rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
-  
-  # aved
-  ts1 <- sum(x$EBASE, na.rm = TRUE)
-  ts2 <- sum(x$Fwoxy, na.rm = TRUE)
-  
-  aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
-  
-  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
-  
-  return(out)
-  
-}
 
 apasumdatmean <- apagrdmean %>% 
   mutate(

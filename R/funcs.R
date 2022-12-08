@@ -528,9 +528,11 @@ optexmeansum <- function(dat){
       panel.grid.minor.x = element_blank()
     )
   
+  ddg <- position_dodge(width = 0.001)
+  
   p1 <- ggplot(toplo1, aes(x = 1, y = avev, color = model)) + 
-    geom_point() + 
-    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0) +
+    geom_point(position = ddg) + 
+    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0, position = ddg) +
     facet_wrap(~bsd + bmean, ncol = 9, strip.position = 'bottom') + 
     thm +
     labs(
@@ -540,14 +542,14 @@ optexmeansum <- function(dat){
     )
   
   p2 <- ggplot(toplo2, aes(x = 1, y = avev, color = model)) + 
-    geom_point() + 
-    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0) +
+    geom_point(position = ddg) + 
+    geom_errorbar(aes(ymin = lov, ymax = hiv), width = 0, position = ddg) +
     facet_wrap(~bsd + bmean, ncol = 9, strip.position = 'bottom') + 
     thm +
     labs(
       color = NULL,
       y = expression(paste('b (cm ', hr^-1, ') / ( ', m^2 ~ s^-2, ')')), 
-      title = 'ndays = 1'
+      title = 'ndays = 7'
     )
   
   p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'bottom')

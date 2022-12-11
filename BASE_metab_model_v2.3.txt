@@ -61,6 +61,7 @@
       kpts[i] <- K * pow(1.0241,(tempC[i]-temp.ave))	 
       gppts[i] <- A * pow(PAR[i],p) 
       erpts[i] <- R * (pow(theta,(tempC[i]-temp.ave)))
+      gets[i] <- K * (DO.sat[i]-DO.modelled[i]) * pow(1.0241,(tempC[i]-temp.ave))
       
     }
     

@@ -199,13 +199,13 @@ ebmetaball <- res %>%
     .groups = 'drop'
   ) %>% 
   mutate(
-    NEP = Pg_vol - Rt_vol
+    NEM = Pg_vol - Rt_vol
   ) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'EBASE')
 
 # combineall ----------------------------------------------------------------------------------
 
-metaball <- bind_rows(opmetaball, bsmetaball, ebmetaball)
+apaobscmp <- bind_rows(opmetaball, bsmetaball, ebmetaball)
 
-save(metaball, file = here('data/metaball.RData'))
+save(apaobscmp, file = here('data/apaobscmp.RData'))

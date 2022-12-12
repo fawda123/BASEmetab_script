@@ -180,7 +180,7 @@ bsmetaball <- do.call('rbind', output) %>%
 # EBASE ---------------------------------------------------------------------------------------
 
 # setup parallel backend
-cl <- makeCluster(4)
+cl <- makeCluster(5)
 registerDoParallel(cl)
 
 res <- ebase(exdat, interval = 900, H = 1.852841, progress = TRUE, n.chains = 5)
@@ -199,10 +199,13 @@ ebmetaball <- res %>%
     .groups = 'drop'
   ) %>% 
   mutate(
-    NEP = GPP - ER
-  )
+    NEP = Pg_vol - Rt_vol
+  ) %>% 
+  gather('var', 'val', -Date) %>% 
+  mutate(typ = 'EBASE')
 
 # combineall ----------------------------------------------------------------------------------
 
 metaball <- bind_rows(opmetaball, bsmetaball, ebmetaball)
 
+save(metaball, file = here('data/metaball.RData'))

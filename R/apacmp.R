@@ -26,7 +26,7 @@ opmetaball <- opmetab %>%
     D = mean(D, na.rm = T), 
     Pg_vol = mean(Pg_vol, na.rm = T), 
     Rt_vol = -1 * mean(Rt_vol, na.rm = T), 
-    NEM = mean(NEM, na.rm = T), 
+    NEM = mean(NEM / depth, na.rm = T), 
     .groups = 'drop'
   ) %>% 
   rename(Date = metab_date) %>% 
@@ -163,14 +163,14 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   
 }
 
-# convert form g O2 m-2 d-1 to mmol O2 m-3 d-1
+# convert form g O2 m-3 d-1 to mmol O2 m-3 d-1
 bsmetaball <- do.call('rbind', output) %>% 
   mutate(
     Date = lubridate::mdy(Date), 
-    Pg_vol = GPP / 0.032 / depth,
-    Rt_vol = ER / 0.032 / depth,
-    NEM = NEP / 0.032 / depth, 
-    D = D / 0.032 / depth
+    Pg_vol = GPP / 0.032,
+    Rt_vol = ER / 0.032,
+    NEM = NEP / 0.032, 
+    D = D / 0.032
   ) %>% 
   select(Date, Pg_vol, Rt_vol, NEM, D) %>% 
   gather('var', 'val', -Date) %>% 
@@ -225,7 +225,7 @@ opmetaball <- opmetab %>%
     D = mean(D, na.rm = T), 
     Pg_vol = mean(Pg_vol, na.rm = T), 
     Rt_vol = -1 * mean(Rt_vol, na.rm = T), 
-    NEM = mean(NEM, na.rm = T), 
+    NEM = mean(NEM / depth, na.rm = T), 
     .groups = 'drop'
   ) %>% 
   rename(Date = metab_date) %>% 
@@ -362,14 +362,14 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   
 }
 
-# convert form g O2 m-2 d-1 to mmol O2 m-3 d-1
+# convert form g O2 m-3 d-1 to mmol O2 m-3 d-1
 bsmetaball <- do.call('rbind', output) %>% 
   mutate(
     Date = lubridate::ymd(Date), 
-    Pg_vol = GPP / 0.032 / depth,
-    Rt_vol = ER / 0.032 / depth,
-    NEM = NEP / 0.032 / depth, 
-    D = D / 0.032 / depth
+    Pg_vol = GPP / 0.032,
+    Rt_vol = ER / 0.032,
+    NEM = NEP / 0.032, 
+    D = D / 0.032
   ) %>% 
   select(Date, Pg_vol, Rt_vol, NEM, D) %>% 
   gather('var', 'val', -Date) %>% 

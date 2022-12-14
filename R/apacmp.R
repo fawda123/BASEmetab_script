@@ -208,7 +208,7 @@ ebmetaball <- res %>%
 
 apaobscmp <- bind_rows(opmetaball, bsmetaball, ebmetaball)
 
-save(apaobscmp, file = here('data/apaobscmp.RData'))
+# save(apaobscmp, file = here('data/apaobscmp.RData'))
 
 # Odum, dtd ------------------------------------------------------------------------------------
 
@@ -365,7 +365,7 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
 # convert form g O2 m-2 d-1 to mmol O2 m-3 d-1
 bsmetaball <- do.call('rbind', output) %>% 
   mutate(
-    Date = lubridate::mdy(Date), 
+    Date = lubridate::ymd(Date), 
     Pg_vol = GPP / 0.032 / depth,
     Rt_vol = ER / 0.032 / depth,
     NEM = NEP / 0.032 / depth, 
@@ -374,7 +374,6 @@ bsmetaball <- do.call('rbind', output) %>%
   select(Date, Pg_vol, Rt_vol, NEM, D) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'BASEmetab')
-
 
 # EBASE, dtd ------------------------------------------------------------------------------------
 
@@ -422,4 +421,15 @@ ebmetaball <- res %>%
 
 apadtdcmp <- bind_rows(opmetaball, bsmetaball, ebmetaball)
 
-save(apadtdcmp, file = here('data/apadtdcmp.RData'))
+# save(apadtdcmp, file = here('data/apadtdcmp.RData'))
+
+# combine obs and dtd -------------------------------------------------------------------------
+
+apacmp <- list(
+    observed = apaobscmp, 
+    detided = apadtdcmp
+  ) %>% 
+  enframe(name = 'dotyp') %>% 
+  unnest('value')
+
+save(apacmp, file = here('data/apacmp.RData'))

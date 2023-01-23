@@ -122,7 +122,9 @@ bsmetab <- fwoxybasemetab %>%
 ebmetab <- fwoxyebase %>%
   mutate(
     secs = getsec(DateTimeStamp),
-    D = -1 * D, 
+    D = -1 * D / H, 
+    Pg_vol = P / H,
+    Rt_vol = R / H, 
     typ = 'EBASE'
   ) %>% 
   select(secs, typ, Pg_vol, Rt_vol, D, dDO) %>% 
@@ -257,6 +259,7 @@ For EBASE, we can compare the individual parameter estimates from values used to
 ```{r}
 a <- fwoxyebase %>% 
   pull(a) %>% 
+  na.omit() %>% 
   unique %>% 
   mean()
 a
@@ -267,6 +270,7 @@ This is very close to the input used for Fwoxy. A second parameter output from F
 ```{r}
 b <- fwoxyebase %>% 
   pull(b) %>% 
+  na.omit() %>% 
   unique %>% 
   mean()
 b

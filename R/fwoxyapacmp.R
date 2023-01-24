@@ -168,19 +168,16 @@ apasumdat <- apagrd %>%
           )
         ) %>%
         pivot_wider(names_from = 'mod', values_from = 'val')
-      
+
       sumgrp <- cmp %>% 
-        filter(var %in% c('a', 'Rt_vol', 'b')) %>% 
         group_by(grp, var) %>% 
         summarise(
           Fwoxy = mean(Fwoxy, na.rm = T), 
           EBASE = mean(EBASE, na.rm = T), 
           .groups = 'drop'
         ) 
-      sumtms <- cmp %>% 
-        filter(!var %in% c('a', 'Rt_vol', 'b'))
       
-      sumcmp <- bind_rows(sumgrp, sumtms) %>% 
+      sumcmp <- sumgrp %>% 
         group_by(var) %>% 
         nest() %>% 
         summarise(

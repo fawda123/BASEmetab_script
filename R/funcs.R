@@ -74,9 +74,9 @@ getsec <- function(x){
 priorcomp <- function(dat, ind){
   
   met <- tibble(
-    lbs = c('r2', 'rmse', 'aved'),
-    lbspr = c('R^2', 'RMSE', 'Ave.\nDiff.'), 
-    direc = c(-1, 1, 1)
+    lbs = c('r2', 'rmse'),
+    lbspr = c('R^2', 'RMSE'), 
+    direc = c(-1, 1)
   )
 
   toshw <- met$lbs[ind]
@@ -121,10 +121,14 @@ priorcomp <- function(dat, ind){
     pivot_longer(-c(ind, ndays), names_to = 'var', values_to = 'val') %>% 
     mutate(
       var = factor(var, 
-                   levels = c('DO_mod', 'Pg_vol', 'Rt_vol', 'D', 'a'), 
-                   labels = c('DO [mod]', 'Pg [vol]', 'Rt [vol]', 'D', 'a')
+                   levels = c('DO_mod', 'P', 'R', 'D', 'a'), 
+                   labels = c('DO [mod]', 'P', 'R', 'D', 'a')
       )
     )
+  
+  flmx <- 100
+  if(toshw == 'rmse')
+    flmx <- max(toplo2$val)
   
   p1 <- ggplot(toplo1, aes(y = ind, x = var, fill = val)) + 
     geom_tile(color = 'black') + 
@@ -155,7 +159,7 @@ priorcomp <- function(dat, ind){
       strip.text = element_text(hjust = 0, size = 12, face = 'bold')
     ) + 
     facet_wrap(~ndays, ncol = 2) + 
-    scale_fill_distiller(palette = 'YlOrRd', direction = direc, limits = c(0, 100)) + 
+    scale_fill_distiller(palette = 'YlOrRd', direction = direc, limits = c(0, flmx)) + 
     scale_x_discrete(position = 'top', expand = c(0, 0), labels = parse(text = levels(toplo2$var))) + 
     scale_y_reverse(expand = c(0, 0)) + 
     labs(
@@ -296,7 +300,7 @@ optex <- function(apagrd, fwdatcmp, asdin, rsdin, bsdin, ndaysin){
     pivot_wider(names_from = 'mod', values_from = 'val')
 
   toplo1 <- cmp %>% 
-    filter(var %in% c('Pg_vol', 'Rt_vol', 'D')) %>% 
+    filter(var %in% c('P', 'R', 'D')) %>% 
     group_by(grp, var) %>% 
     summarise(
       Fwoxy = mean(Fwoxy, na.rm = T), 
@@ -307,13 +311,12 @@ optex <- function(apagrd, fwdatcmp, asdin, rsdin, bsdin, ndaysin){
     pivot_longer(-c(Date, grp, var), names_to = 'model', values_to = 'est') %>% 
     mutate(
       var = factor(var, 
-                   levels = c('Pg_vol', 'Rt_vol', 'D'), 
-                   labels = c('Pg [vol]', 'Rt [vol]', 'D')
+                   levels = c('P', 'R', 'D')
       )
     ) %>% 
     select(-grp)
   
-  ylab <- expression(paste(O [2], ' (mmol ', m^-3, ' ', d^-1, ')'))
+  ylab <- expression(paste(O [2], ' (mmol ', m^-2, ' ', d^-1, ')'))
   
   p1 <- ggplot(toplo1, aes(x = Date, y = est, group = model, color = model)) + 
     geom_line() +
@@ -388,13 +391,13 @@ sumfun <- function(x){
   # rmse
   rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
   
-  # aved
-  ts1 <- sum(x$EBASE, na.rm = TRUE)
-  ts2 <- sum(x$Fwoxy, na.rm = TRUE)
+  # # aved
+  # ts1 <- sum(x$EBASE, na.rm = TRUE)
+  # ts2 <- sum(x$Fwoxy, na.rm = TRUE)
+  # 
+  # aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
   
-  aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
-  
-  out <- data.frame(r2 = r2, rmse = rmse, aved = aved)
+  out <- data.frame(r2 = r2, rmse = rmse)#, aved = aved)
   
   return(out)
   

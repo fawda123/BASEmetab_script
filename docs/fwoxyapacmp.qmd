@@ -33,9 +33,11 @@ source(here('R/funcs.R'))
 
 load(file = here('data/apasumdat.RData'))
 load(file = here('data/apasumdatmean.RData'))
-load(file = here('data/apagrd.RData'))
+load(file = here('data/apagrd1.RData'))
+load(file = here('data/apagrd2.RData'))
 load(file = here('data/apagrdmean.RData'))
 
+apagrd <- bind_rows(apagrd1, apagrd2)
 fwdat <- read_csv(here("data/apafwoxy.csv")) 
 
 # fwoxy for comparison
@@ -46,12 +48,12 @@ fwdatcmp <- fwdat %>%
     Date = as.Date(DateTimeStamp, tz = 'America/Jamaica'),
     DO_obs = `oxy,mmol/m3`, 
     a = `aparam,(mmolO2/m2/d)/(W/m2)` / `ht,m`,
-    Rt_vol = `er,mmol/m2/d` / `ht,m`,
-    Pg_vol = `gpp,mmol/m2/d` / `ht,m`,
-    D = -1 * `gasex,mmol/m2/d` / `ht,m`,
+    R = `er,mmol/m2/d`,
+    P = `gpp,mmol/m2/d`,
+    D = -1 * `gasex,mmol/m2/d`,
     b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 660) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
   ) %>% 
-  select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
+  select(Date, DateTimeStamp, DO_obs, H = `ht,m`, a, b, P, R, D)
 ```
 
 
@@ -129,12 +131,12 @@ ggplot(fwdatcmp, aes(x = DateTimeStamp, y = DO_obs)) +
 ```
 
 ```{r}
-ggplot(fwdatcmp, aes(x = DateTimeStamp, y = a)) + 
+ggplot(fwdatcmp, aes(x = DateTimeStamp, y = a * H)) + 
   geom_line() + 
   theme_minimal() + 
   labs(
     x = NULL, 
-    y = expression(paste('a (mmol ', m^-3, d^-1, ') / (W ', m^{-2}, ')'))
+    y = expression(paste('a (mmol ', m^-2, d^-1, ') / (W ', m^{-2}, ')'))
   )
 ```
 

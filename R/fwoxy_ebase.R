@@ -37,18 +37,20 @@ data <- example %>%
   select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd) %>% 
   .[-577,]
 
-res <- ebase(data, interval = 900, ndays = 6, H = ht_const, progress = F, n.chains = 5)
+res <- ebase(data, interval = 900, ndays = 1, H = ht_const, progress = F, n.chains = 5, 
+            doave = T)
 
 fwoxyebase <- res %>% 
   select(
     DateTimeStamp, 
+    H, 
     DO.meas = DO_obs, 
     DO.modelled = DO_mod, 
     dDO, 
     a, 
     b, 
-    Pg_vol, 
-    Rt_vol, 
+    P, 
+    R, 
     D
   )
 

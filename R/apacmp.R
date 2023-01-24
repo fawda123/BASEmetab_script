@@ -20,13 +20,14 @@ tmp <- DO_APNERR2012_6_12_0.8 %>%
 opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
 
+# all units to mmol O2 m-2 d-1
 opmetaball <- opmetab %>% 
   group_by(metab_date) %>% 
   summarize(
-    D = mean(D, na.rm = T), 
-    Pg_vol = mean(Pg_vol, na.rm = T), 
-    Rt_vol = -1 * mean(Rt_vol, na.rm = T), 
-    NEM = mean(NEM / depth, na.rm = T), 
+    D = mean(depth * D, na.rm = T), 
+    P = mean(Pg, na.rm = T), 
+    R = -1 * mean(Rt, na.rm = T), 
+    NEM = mean(NEM, na.rm = T), 
     .groups = 'drop'
   ) %>% 
   rename(Date = metab_date) %>% 
@@ -84,7 +85,7 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 2)
+cl <- makeCluster(ncores - 3)
 registerDoParallel(cl)
 
 # setup log file
@@ -163,16 +164,16 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   
 }
 
-# convert form g O2 m-3 d-1 to mmol O2 m-3 d-1
+# convert form g O2 m-3 d-1 to mmol O2 m-2 d-1
 bsmetaball <- do.call('rbind', output) %>% 
   mutate(
     Date = lubridate::mdy(Date), 
-    Pg_vol = GPP / 0.032,
-    Rt_vol = ER / 0.032,
-    NEM = NEP / 0.032, 
-    D = D / 0.032
+    P = depth * GPP / 0.032,
+    R = depth * ER / 0.032,
+    NEM = depth * NEP / 0.032, 
+    D = depth * D / 0.032
   ) %>% 
-  select(Date, Pg_vol, Rt_vol, NEM, D) %>% 
+  select(Date, P, R, NEM, D) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'BASEmetab')
 
@@ -187,19 +188,20 @@ res <- ebase(exdat, interval = 900, H = 1.852841, progress = TRUE, n.chains = 5)
 
 stopCluster(cl)
 
+# all units mmol O2 m-2 d-1
 ebmetaball <- res %>% 
   mutate(
     Date = as.Date(DateTimeStamp)
   ) %>% 
   group_by(Date) %>% 
   summarise(
-    Pg_vol = mean(Pg_vol, na.rm = T), 
-    Rt_vol = mean(Rt_vol, na.rm = T), 
+    P = mean(P, na.rm = T), 
+    R = mean(R, na.rm = T), 
     D = mean(D, na.rm = T),
     .groups = 'drop'
   ) %>% 
   mutate(
-    NEM = Pg_vol - Rt_vol
+    NEM = P - R
   ) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'EBASE')
@@ -219,18 +221,20 @@ tmp <- DO_APNERR2012_6_12_0.8 %>%
 opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
 
+# all units to mmol O2 m-2 d-1
 opmetaball <- opmetab %>% 
   group_by(metab_date) %>% 
   summarize(
-    D = mean(D, na.rm = T), 
-    Pg_vol = mean(Pg_vol, na.rm = T), 
-    Rt_vol = -1 * mean(Rt_vol, na.rm = T), 
-    NEM = mean(NEM / depth, na.rm = T), 
+    D = mean(depth * D, na.rm = T), 
+    P = mean(Pg, na.rm = T), 
+    R = -1 * mean(Rt, na.rm = T), 
+    NEM = mean(NEM, na.rm = T), 
     .groups = 'drop'
   ) %>% 
   rename(Date = metab_date) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'Odum')
+
 
 # BASEmetab, dtd -------------------------------------------------------------------------------
 
@@ -283,7 +287,7 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 2)
+cl <- makeCluster(ncores - 3)
 registerDoParallel(cl)
 
 # setup log file
@@ -362,16 +366,16 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   
 }
 
-# convert form g O2 m-3 d-1 to mmol O2 m-3 d-1
+# convert form g O2 m-3 d-1 to mmol O2 m-2 d-1
 bsmetaball <- do.call('rbind', output) %>% 
   mutate(
     Date = lubridate::ymd(Date), 
-    Pg_vol = GPP / 0.032,
-    Rt_vol = ER / 0.032,
-    NEM = NEP / 0.032, 
-    D = D / 0.032
+    P = depth * GPP / 0.032,
+    R = depth * ER / 0.032,
+    NEM = depth * NEP / 0.032, 
+    D = depth * D / 0.032
   ) %>% 
-  select(Date, Pg_vol, Rt_vol, NEM, D) %>% 
+  select(Date, P, R, NEM, D) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'BASEmetab')
 
@@ -400,19 +404,20 @@ res <- ebase(exdatdtd, interval = 900, H = 1.852841, progress = TRUE, n.chains =
 
 stopCluster(cl)
 
+# all units mmol O2 m-2 d-1
 ebmetaball <- res %>% 
   mutate(
     Date = as.Date(DateTimeStamp)
   ) %>% 
   group_by(Date) %>% 
   summarise(
-    Pg_vol = mean(Pg_vol, na.rm = T), 
-    Rt_vol = mean(Rt_vol, na.rm = T), 
+    P = mean(P, na.rm = T), 
+    R = mean(R, na.rm = T), 
     D = mean(D, na.rm = T),
     .groups = 'drop'
   ) %>% 
   mutate(
-    NEM = Pg_vol - Rt_vol
+    NEM = P - R
   ) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'EBASE')

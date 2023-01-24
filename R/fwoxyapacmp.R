@@ -20,12 +20,12 @@ fwdatcmp <- fwdat %>%
     Date = as.Date(DateTimeStamp, tz = 'America/Jamaica'),
     DO_obs = `oxy,mmol/m3`, 
     a = `aparam,(mmolO2/m2/d)/(W/m2)` / `ht,m`,
-    Rt_vol = `er,mmol/m2/d` / `ht,m`,
-    Pg_vol = `gpp,mmol/m2/d` / `ht,m`,
-    D = -1 * `gasex,mmol/m2/d` / `ht,m`,
+    R = `er,mmol/m2/d`,
+    P = `gpp,mmol/m2/d`,
+    D = -1 * `gasex,mmol/m2/d`,
     b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 660) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
   ) %>% 
-  select(Date, DateTimeStamp, DO_obs, a, b, Pg_vol, Rt_vol, D)
+  select(Date, DateTimeStamp, DO_obs, a, b, P, R, D)
 
 # fwoxy for input to ebase
 fwdatinp <- fwdat %>% 
@@ -134,12 +134,17 @@ for(i in 1:nrow(grd)){
 }
 
 apagrd <- grd
-save(apagrd, file = 'data/apagrd.RData', compress = 'xz')
-
+apagrd1 <- apagrd[1:27,]
+apagrd2 <- apagrd[28:54,]
+save(apagrd1, file = 'data/apagrd1.RData', compress = 'xz')
+save(apagrd2, file = 'data/apagrd2.RData', compress = 'xz')
 
 # evaluate fit, sd only -----------------------------------------------------------------------
 
-load(file = here('data/apagrd.RData'))
+load(file = here('data/apagrd1.RData'))
+load(file = here('data/apagrd2.RData'))
+
+apagrd <- bind_rows(apagrd1, apagrd2)
 
 apasumdat <- apagrd %>% 
   mutate(
@@ -149,7 +154,7 @@ apasumdat <- apagrd %>%
       cat(ind, '\t')
       
       cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
-        select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
+        select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
           DO_mod.x = DO_obs.x,
           DO_mod.y = DO_mod

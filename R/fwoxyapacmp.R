@@ -10,7 +10,7 @@ library(patchwork)
 
 source(file = here('R/funcs.R'))
 
-fwdat <- read_csv(here("data/apafwoxy.csv")) 
+fwdat <- read_csv(here("data/apafwoxy2.csv")) 
 
 # fwoxy for comparison
 # convert areal to volumetric, extract b at right time step
@@ -22,10 +22,9 @@ fwdatcmp <- fwdat %>%
     a = `aparam,(mmolO2/m2/d)/(W/m2)` / `ht,m`,
     R = `er,mmol/m2/d`,
     P = `gpp,mmol/m2/d`,
-    D = -1 * `gasex,mmol/m2/d`,
-    b = 100 * 3600 * `kw,m/s` / `wspd2,m2/s2` / (`sc,dimensionless` / 660) ^ -0.5 # (m/s)/(m2/s2) to (cm/hr) / (m2/s2)
+    D = -1 * `gasex,mmol/m2/d`
   ) %>% 
-  select(Date, DateTimeStamp, DO_obs, a, b, P, R, D)
+  select(Date, DateTimeStamp, DO_obs, a, b = `bparam, (cm/hr)/(m2/s2)`, P, R, D)
 
 # fwoxy for input to ebase
 fwdatinp <- fwdat %>% 

@@ -91,13 +91,13 @@ fwdatinp <- fwdat %>%
 
 # this takes about ten hours to run
 grd <- crossing(
-  amean = 0.2, #c(0, 0.2, 2),
+  amean = c(0, 2),
   asd = c(0.01, 1),
-  rmean = 20, #c(0, 20, 200), 
-  rsd = c(0.5, 50), 
-  bmean = 0.251, #c(0.0251, 0.251, 2.51), 
+  rmean = c(0, 200), 
+  rsd = c(0.5, 50),
+  bmean = c(0.0251, 2.51), 
   bsd = c(0.001, 0.1),
-  ndays = c(1, 7, 30),
+  ndays = c(1, 7),
   out = NA
 )
 
@@ -118,7 +118,7 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(6)
+  cl <- makeCluster(2)
   registerDoParallel(cl)
   
   # use interp for missing values

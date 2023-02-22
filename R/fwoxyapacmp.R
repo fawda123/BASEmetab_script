@@ -87,17 +87,68 @@ fwdatinp <- fwdat %>%
 #     strip.background = element_blank()
 #   )
 
-# gridded comparisons, sd only ----------------------------------------------------------------
+# gridded comparisons, mean and sd, 1 day -----------------------------------------------------
 
-# this takes about ten hours to run
+# this takes about 24 hours to run
 grd <- crossing(
   amean = c(0, 2),
   asd = c(0.01, 1),
   rmean = c(0, 200), 
   rsd = c(0.5, 50),
-  bmean = c(0.0251, 2.51), 
+  bmean = c(0, 0.502), 
   bsd = c(0.001, 0.1),
-  ndays = c(1, 7),
+  ndays = c(1),
+  out = NA
+)
+
+str <- Sys.time()
+
+# takes about 24 hours
+for(i in 1:nrow(grd)){
+  
+  # counter
+  cat(i, 'of', nrow(grd), '\n')
+  print(Sys.time() - str)
+  
+  # get inputs
+  selrow <- grd[i, ]
+  aprior <- c(selrow$amean, selrow$asd)
+  rprior <- c(selrow$rmean, selrow$rsd)
+  bprior <- c(selrow$bmean, selrow$bsd)
+  ndays <- c(selrow$ndays)
+  
+  # run model for inputs
+  cl <- makeCluster(10)
+  registerDoParallel(cl)
+  
+  # use interp for missing values
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+  
+  stopCluster(cl)
+  
+  # append output to grd
+  grd$out[[i]] <- list(res)
+  
+}
+
+apagrd <- grd
+apagrd1a <- apagrd[1:32,]
+apagrd1b <- apagrd[33:64,]
+save(apagrd1a, file = 'data/apagrd1a.RData', compress = 'xz')
+save(apagrd1b, file = 'data/apagrd1b.RData', compress = 'xz')
+
+# gridded comparisons, mean and sd, 1 day -----------------------------------------------------
+
+# this takes about 24 hours to run
+grd <- crossing(
+  amean = c(0, 2),
+  asd = c(0.01, 1),
+  rmean = c(0, 200), 
+  rsd = c(0.5, 50),
+  bmean = c(0, 0.502), 
+  bsd = c(0.001, 0.1),
+  ndays = c(7),
   out = NA
 )
 
@@ -118,7 +169,7 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(2)
+  cl <- makeCluster(10)
   registerDoParallel(cl)
   
   # use interp for missing values
@@ -133,10 +184,10 @@ for(i in 1:nrow(grd)){
 }
 
 apagrd <- grd
-apagrd1 <- apagrd[1:27,]
-apagrd2 <- apagrd[28:54,]
-save(apagrd1, file = 'data/apagrd1.RData', compress = 'xz')
-save(apagrd2, file = 'data/apagrd2.RData', compress = 'xz')
+apagrd7a <- apagrd[1:32,]
+apagrd7b <- apagrd[33:64,]
+save(apagrd7a, file = 'data/apagrd7a.RData', compress = 'xz')
+save(apagrd7b, file = 'data/apagrd7b.RData', compress = 'xz')
 
 # evaluate fit, sd only -----------------------------------------------------------------------
 

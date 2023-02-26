@@ -191,10 +191,12 @@ save(apagrd7b, file = 'data/apagrd7b.RData', compress = 'xz')
 
 # evaluate fit, sd only -----------------------------------------------------------------------
 
-load(file = here('data/apagrd1.RData'))
-load(file = here('data/apagrd2.RData'))
+load(file = here('data/apagrd1a.RData'))
+load(file = here('data/apagrd1b.RData'))
+load(file = here('data/apagrd7a.RData'))
+load(file = here('data/apagrd7b.RData'))
 
-apagrd <- bind_rows(apagrd1, apagrd2)
+apagrd <- bind_rows(apagrd1a, apagrd1b, apagrd7a, apagrd7b)
 
 apasumdat <- apagrd %>% 
   mutate(

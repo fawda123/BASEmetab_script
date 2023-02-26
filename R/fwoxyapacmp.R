@@ -138,7 +138,7 @@ apagrd1b <- apagrd[33:64,]
 save(apagrd1a, file = 'data/apagrd1a.RData', compress = 'xz')
 save(apagrd1b, file = 'data/apagrd1b.RData', compress = 'xz')
 
-# gridded comparisons, mean and sd, 1 day -----------------------------------------------------
+# gridded comparisons, mean and sd, 7 day -----------------------------------------------------
 
 # this takes about 24 hours to run
 grd <- crossing(

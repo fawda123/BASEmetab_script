@@ -204,8 +204,11 @@ apasumdat <- apagrd %>%
     ests = purrr::pmap(list(ind, out), function(ind, out){
       
       cat(ind, '\t')
-      
+
       cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
+        mutate(
+          a.y = H * a.y # need to convert a to m-2, ebase output is m-3, fwoxy is m-2
+        ) %>% 
         select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
           DO_mod.x = DO_obs.x,
@@ -228,7 +231,7 @@ apasumdat <- apagrd %>%
           EBASE = mean(EBASE, na.rm = T), 
           .groups = 'drop'
         ) 
-      
+
       sumcmp <- sumgrp %>% 
         group_by(var) %>% 
         nest() %>% 

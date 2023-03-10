@@ -391,13 +391,11 @@ sumfun <- function(x){
   # rmse
   rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
   
-  # # aved
-  # ts1 <- sum(x$EBASE, na.rm = TRUE)
-  # ts2 <- sum(x$Fwoxy, na.rm = TRUE)
-  # 
-  # aved <- 100 * (ts1 - ts2)/((ts1 + ts2)/2)
+  # mape
+  mape <- abs((x$Fwoxy - x$EBASE) / x$Fwoxy)
+  mape <- 100 * mean(mape, na.rm = TRUE)
   
-  out <- data.frame(r2 = r2, rmse = rmse)#, aved = aved)
+  out <- data.frame(r2 = r2, rmse = rmse, mape = mape)
   
   return(out)
   

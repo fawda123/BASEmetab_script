@@ -395,7 +395,10 @@ sumfun <- function(x){
   mape <- abs((x$Fwoxy - x$EBASE) / x$Fwoxy)
   mape <- 100 * mean(mape, na.rm = TRUE)
   
-  out <- data.frame(r2 = r2, rmse = rmse, mape = mape)
+  # mae
+  mae <- mean(abs(x$Fwoxy - x$EBASE), na.rm = TRUE)
+  
+  out <- data.frame(r2 = r2, rmse = rmse, mape = mape, mae = mae)
   
   return(out)
   

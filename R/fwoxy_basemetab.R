@@ -44,7 +44,7 @@ K.est <- F
 
 # mean for the informed normal prior distribution if K.est = F
 # 0.67 is m/d from Fwoxy, 3 is depth at the site, BASE model uses k as d-1
-K.meas.mean <-   0.6702159 / depth
+K.meas.mean <-   0.6702159 / ht_const
 
 # sd for the informed normal prior distribution if K.est = F
 # this sd is the same range as a proportion of the mean for ebase b parameter

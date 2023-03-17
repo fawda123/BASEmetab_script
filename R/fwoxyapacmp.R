@@ -189,6 +189,57 @@ apagrd7b <- apagrd[33:64,]
 save(apagrd7a, file = 'data/apagrd7a.RData', compress = 'xz')
 save(apagrd7b, file = 'data/apagrd7b.RData', compress = 'xz')
 
+# gridded comparisons, mean and sd, 30 day ----------------------------------------------------
+
+# this takes about 24 hours to run
+grd <- crossing(
+  amean = c(0, 2),
+  asd = c(0.01, 1),
+  rmean = c(0, 200), 
+  rsd = c(0.5, 50),
+  bmean = c(0, 0.502), 
+  bsd = c(0.001, 0.1),
+  ndays = c(30),
+  out = NA
+)
+
+str <- Sys.time()
+
+# takes about 24 hours
+for(i in 1:nrow(grd)){
+  
+  # counter
+  cat(i, 'of', nrow(grd), '\n')
+  print(Sys.time() - str)
+  
+  # get inputs
+  selrow <- grd[i, ]
+  aprior <- c(selrow$amean, selrow$asd)
+  rprior <- c(selrow$rmean, selrow$rsd)
+  bprior <- c(selrow$bmean, selrow$bsd)
+  ndays <- c(selrow$ndays)
+  
+  # run model for inputs
+  cl <- makeCluster(10)
+  registerDoParallel(cl)
+  
+  # use interp for missing values
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+  
+  stopCluster(cl)
+  
+  # append output to grd
+  grd$out[[i]] <- list(res)
+  
+}
+
+apagrd <- grd
+apagrd30a <- apagrd[1:32,]
+apagrd30b <- apagrd[33:64,]
+save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
+save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
+
 # evaluate fit, sd only -----------------------------------------------------------------------
 
 load(file = here('data/apagrd1a.RData'))

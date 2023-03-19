@@ -382,8 +382,10 @@ optex <- function(apagrd, fwdatcmp, asdin, rsdin, bsdin, ndaysin){
 # summary function for r2, rmse, and ave diff, used in fwoxyapacmp.R
 sumfun <- function(x){
   
+  lmmod <- lm(EBASE ~ Fwoxy, x) 
+  
   # r2
-  r2 <- lm(EBASE ~ Fwoxy, x) %>% 
+  r2 <- lmmod %>% 
     summary() %>% 
     .$r.squared
   r2 <- 100 * r2
@@ -398,7 +400,12 @@ sumfun <- function(x){
   # mae
   mae <- mean(abs(x$Fwoxy - x$EBASE), na.rm = TRUE)
   
-  out <- data.frame(r2 = r2, rmse = rmse, mape = mape, mae = mae)
+  # coefficient of determination
+  rss <- sum(resid(lmmod)^2) # same as deviance(lmmod)
+  tss <- sum((x$EBASE - mean(x$EBASE, na.rm = T))^2)
+  cfd <- 1 - rss / tss
+  
+  out <- data.frame(r2 = r2, rmse = rmse, mape = mape, mae = mae, cfd = cfd)
   
   return(out)
   

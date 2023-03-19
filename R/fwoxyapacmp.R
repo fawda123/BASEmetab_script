@@ -274,7 +274,8 @@ apasumdat <- apagrd %>%
           )
         ) %>%
         pivot_wider(names_from = 'mod', values_from = 'val')
-
+      
+      # average output by optimization period
       sumgrp <- cmp %>% 
         group_by(grp, var) %>% 
         summarise(

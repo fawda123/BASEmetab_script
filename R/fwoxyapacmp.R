@@ -206,7 +206,7 @@ grd <- crossing(
 str <- Sys.time()
 
 # takes about 24 hours
-for(i in 8:nrow(grd)){
+for(i in 20:nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')

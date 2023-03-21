@@ -240,7 +240,7 @@ apagrd30b <- apagrd[33:64,]
 save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
-# evaluate fit, sd only -----------------------------------------------------------------------
+# evaluate fit all priors -------------------------------------------------
 
 load(file = here('data/apagrd1a.RData'))
 load(file = here('data/apagrd1b.RData'))

@@ -392,20 +392,21 @@ sumfun <- function(x){
   
   # rmse
   rmse <- sqrt(mean((x$EBASE - x$Fwoxy)^2, na.rm = T))
-  
+
   # mape
   mape <- abs((x$Fwoxy - x$EBASE) / x$Fwoxy)
   mape <- 100 * mean(mape, na.rm = TRUE)
-  
+
   # mae
   mae <- mean(abs(x$Fwoxy - x$EBASE), na.rm = TRUE)
+
+  # nash-sutcliffe efficiency
+  # rss <- sum((x$Fwoxy - x$EBASE)^2)# sum(resid(lmmod)^2) # same as deviance(lmmod)
+  # tss <- sum((x$Fwoxy - mean(x$Fwoxy, na.rm = T))^2)
+  # cfd <- 1 - rss / tss
+  nse <- hydroGOF::NSE(x$EBASE, x$Fwoxy)
   
-  # coefficient of determination
-  rss <- sum(resid(lmmod)^2) # same as deviance(lmmod)
-  tss <- sum((x$EBASE - mean(x$EBASE, na.rm = T))^2)
-  cfd <- 1 - rss / tss
-  
-  out <- data.frame(r2 = r2, rmse = rmse, mape = mape, mae = mae, cfd = cfd)
+  out <- data.frame(r2 = r2, rmse = rmse, mape = mape, mae = mae, nse = nse)
   
   return(out)
   

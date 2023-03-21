@@ -206,7 +206,7 @@ grd <- crossing(
 str <- Sys.time()
 
 # takes about 24 hours
-for(i in 6:nrow(grd)){
+for(i in 8:nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')
@@ -224,7 +224,7 @@ for(i in 6:nrow(grd)){
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
                aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
   
   stopCluster(cl)

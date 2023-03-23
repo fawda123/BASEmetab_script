@@ -191,7 +191,7 @@ save(apagrd7b, file = 'data/apagrd7b.RData', compress = 'xz')
 
 # gridded comparisons, mean and sd, 30 day ----------------------------------------------------
 
-# this takes about 24 hours to run
+# this takes about 48 hours to run
 grd <- crossing(
   amean = c(0, 2),
   asd = c(0.01, 1),
@@ -206,7 +206,7 @@ grd <- crossing(
 str <- Sys.time()
 
 # takes about 24 hours
-for(i in 20:nrow(grd)){
+for(i in 59:nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')
@@ -235,9 +235,9 @@ for(i in 20:nrow(grd)){
 }
 
 apagrd <- grd
-apagrd30a <- apagrd[1:32,]
+# apagrd30a <- apagrd[1:32,]
 apagrd30b <- apagrd[33:64,]
-save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
+# save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
 # evaluate fit all priors -------------------------------------------------

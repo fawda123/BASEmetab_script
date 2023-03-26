@@ -205,8 +205,8 @@ grd <- crossing(
 
 str <- Sys.time()
 
-# takes about 24 hours
-for(i in 59:nrow(grd)){
+# takes about 48 hours
+for(i in 1:nrow(grd)){
   
   # counter
   cat(i, 'of', nrow(grd), '\n')
@@ -235,9 +235,9 @@ for(i in 59:nrow(grd)){
 }
 
 apagrd <- grd
-# apagrd30a <- apagrd[1:32,]
+apagrd30a <- apagrd[1:32,]
 apagrd30b <- apagrd[33:64,]
-# save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
+save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
 # evaluate fit all priors -------------------------------------------------

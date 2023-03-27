@@ -251,7 +251,7 @@ load(file = here('data/apagrd30b.RData'))
 
 apagrd <- bind_rows(apagrd1a, apagrd1b, apagrd7a, apagrd7b, apagrd30a, apagrd30b)
 
-apasumdat <- apagrd[150, ] %>% 
+apasumdat <- apagrd %>% 
   mutate(
     ind = 1:nrow(.),
     ests = purrr::pmap(list(ind, out), function(ind, out){

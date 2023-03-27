@@ -19,7 +19,7 @@ fwdatcmp <- fwdat %>%
     DateTimeStamp = dmy_hms(datet, tz = 'America/Jamaica'),
     Date = as.Date(DateTimeStamp, tz = 'America/Jamaica'),
     DO_obs = `oxy,mmol/m3`, 
-    a = `aparam,(mmolO2/m2/d)/ %>% %>% (W/m2)` / `ht,m`,
+    a = `aparam,(mmolO2/m2/d)/(W/m2)`,
     R = `er,mmol/m2/d`,
     P = `gpp,mmol/m2/d`,
     D = -1 * `gasex,mmol/m2/d`
@@ -251,7 +251,7 @@ load(file = here('data/apagrd30b.RData'))
 
 apagrd <- bind_rows(apagrd1a, apagrd1b, apagrd7a, apagrd7b, apagrd30a, apagrd30b)
 
-apasumdat <- apagrd %>% 
+apasumdat <- apagrd[150, ] %>% 
   mutate(
     ind = 1:nrow(.),
     ests = purrr::pmap(list(ind, out), function(ind, out){

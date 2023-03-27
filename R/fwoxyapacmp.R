@@ -240,6 +240,45 @@ apagrd30b <- apagrd[33:64,]
 save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
+
+# synthetic with EBASE defaults -------------------------------------------
+
+# this takes abou 3 hours to run
+grd <- crossing(
+  ndays = c(1, 7, 30),
+  out = NA
+)
+
+str <- Sys.time()
+
+for(i in 1:nrow(grd)){
+  
+  # counter
+  cat(i, 'of', nrow(grd), '\n')
+  print(Sys.time() - str)
+  
+  # get inputs
+  selrow <- grd[i, ]
+  ndays <- c(selrow$ndays)
+  
+  # run model for inputs
+  cl <- makeCluster(10)
+  registerDoParallel(cl)
+  
+  # use interp for missing values
+  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
+               ndays = ndays)
+  
+  stopCluster(cl)
+  
+  # append output to grd
+  grd$out[[i]] <- list(res)
+  
+}
+
+ebasedefault <- grd
+save(ebasedefault, file = here('data/ebasedefault.RData'), compress = 'xz')
+
 # evaluate fit all priors -------------------------------------------------
 
 load(file = here('data/apagrd1a.RData'))

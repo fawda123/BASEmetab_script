@@ -85,7 +85,7 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 3)
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # setup log file
@@ -123,7 +123,7 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   iters=sample(kern,1)
   
   # Set 
-  n.chains <- 3
+  n.chains <- 4
   n.thin <- 10
   p.est.n <- as.numeric(p.est)
   theta.est.n <- as.numeric(theta.est)
@@ -181,10 +181,11 @@ bsmetaball <- do.call('rbind', output) %>%
 # EBASE, obs ------------------------------------------------------------------------------------
 
 # setup parallel backend
-cl <- makeCluster(5)
+ncores <- detectCores()
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
-res <- ebase(exdat, interval = 900, H = 1.852841, progress = TRUE, n.chains = 5)
+res <- ebase(exdat, interval = 900, H = 1.852841, progress = TRUE, n.chains = 4)
 
 stopCluster(cl)
 
@@ -234,7 +235,6 @@ opmetaball <- opmetab %>%
   rename(Date = metab_date) %>% 
   gather('var', 'val', -Date) %>% 
   mutate(typ = 'Odum')
-
 
 # BASEmetab, dtd -------------------------------------------------------------------------------
 
@@ -287,7 +287,7 @@ dates <- dates[n.records == (86400/interval)] # select only dates with full days
 
 # setup parallel backend
 ncores <- detectCores()
-cl <- makeCluster(ncores - 3)
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # setup log file
@@ -325,7 +325,7 @@ output <- foreach(d = dates, .packages = c('here', 'R2jags')) %dopar% {
   iters=sample(kern,1)
   
   # Set 
-  n.chains <- 3
+  n.chains <- 4
   n.thin <- 10
   p.est.n <- as.numeric(p.est)
   theta.est.n <- as.numeric(theta.est)
@@ -397,10 +397,11 @@ exdatdtd <- APNERR2012dtd %>%
   select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd) 
 
 # setup parallel backend
-cl <- makeCluster(5)
+ncores <- detectCores()
+cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
-res <- ebase(exdatdtd, interval = 900, H = 1.852841, progress = TRUE, n.chains = 5)
+res <- ebase(exdatdtd, interval = 900, H = 1.852841, progress = TRUE, n.chains = 4)
 
 stopCluster(cl)
 

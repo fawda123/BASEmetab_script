@@ -240,10 +240,9 @@ apagrd30b <- apagrd[33:64,]
 save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
-
 # synthetic with EBASE defaults -------------------------------------------
 
-# this takes abou 3 hours to run
+# this takes about 2 hours to run
 grd <- crossing(
   ndays = c(1, 7, 30),
   out = NA

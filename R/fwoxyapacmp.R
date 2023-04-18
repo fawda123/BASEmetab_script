@@ -7,6 +7,7 @@ library(EBASE)
 library(doParallel)
 library(ggplot2)
 library(patchwork)
+library(oce)
 
 source(file = here('R/funcs.R'))
 
@@ -441,6 +442,49 @@ apasumdatmean <- apagrdmean %>%
   select(-out)
 
 save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
+
+# adding noise to fwoxy time series -----------------------------------------------------------
+
+# get tidal pred from height vector
+datsl <- as.sealevel(elevation = fwdatinp$H, time = fwdatinp$DateTimeStamp)
+mod <- tidem(t = datsl)
+fwdatinp$Tide <- predict(mod)
+
+# add noise (2015 paper used 0, 1, and 2 as sd)
+fwdatinp$DO_noise <- fwdatinp$DO_obs + rnorm(nrow(fwdatinp), 0, 0.5)
+fwdatinp$DO_tid <- fwdatinp$DO_obs + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
+fwdatinp$DO_tidnoise <- fwdatinp$DO_noise + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
+
+# sub <- 1:nrow(fwdatinp)
+# 
+# plot(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], col = NA, type = 'l')
+# 
+# lines(DO_tid ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
+# lines(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
+# lines(DO_tidnoise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'red', lwd = 1)
+# lines(DO_obs ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'black', lwd = 1)
+
+tomod <- fwdatinp %>% 
+  select(-DO_obs, -DO_tid, -DO_noise) %>% 
+  rename(DO_obs = DO_tidnoise)
+
+# run model for inputs
+cl <- makeCluster(10)
+registerDoParallel(cl)
+
+# use interp for missing values
+restidnoise <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
+
+tomod <- fwdatinp %>% 
+  select(-DO_tid, -DO_noise, DO_tidnoise) #%>% 
+# rename(DO_obs = DO_tidnoise)
+
+# run model for inputs
+cl <- makeCluster(10)
+registerDoParallel(cl)
+
+# use interp for missing values
+resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
 
 
 

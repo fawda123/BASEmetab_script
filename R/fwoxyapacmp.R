@@ -455,14 +455,14 @@ fwdatinp$DO_noise <- fwdatinp$DO_obs + rnorm(nrow(fwdatinp), 0, 0.5)
 fwdatinp$DO_tid <- fwdatinp$DO_obs + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
 fwdatinp$DO_tidnoise <- fwdatinp$DO_noise + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
 
-# sub <- 1:nrow(fwdatinp)
-# 
-# plot(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], col = NA, type = 'l')
-# 
-# lines(DO_tid ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
-# lines(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
-# lines(DO_tidnoise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'red', lwd = 1)
-# lines(DO_obs ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'black', lwd = 1)
+sub <- 10000:12000
+
+plot(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], col = NA, type = 'l')
+
+lines(DO_tid ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
+lines(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
+lines(DO_tidnoise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'blue', lwd = 1)
+lines(DO_obs ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'red', lwd = 1)
 
 tomod <- fwdatinp %>% 
   select(-DO_obs, -DO_tid, -DO_noise) %>% 
@@ -475,6 +475,9 @@ registerDoParallel(cl)
 # use interp for missing values
 restidnoise <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
 
+# save ebase results for noisy ts
+save(restidnoise, file = here('data/restidnoise.RData'))
+
 tomod <- fwdatinp %>% 
   select(-DO_tid, -DO_noise, DO_tidnoise) #%>% 
 # rename(DO_obs = DO_tidnoise)
@@ -486,5 +489,6 @@ registerDoParallel(cl)
 # use interp for missing values
 resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
 
-
+# save ebase results for observed (synthetic) ts
+save(resobs, file = here('data/resobs.RData'))
 

@@ -8,6 +8,8 @@ library(doParallel)
 library(ggplot2)
 library(patchwork)
 library(oce)
+library(SWMPr)
+library(WtRegDO)
 
 source(file = here('R/funcs.R'))
 
@@ -445,28 +447,51 @@ save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
 
 # adding noise to fwoxy time series -----------------------------------------------------------
 
-# get tidal pred from height vector
-datsl <- as.sealevel(elevation = fwdatinp$H, time = fwdatinp$DateTimeStamp)
-mod <- tidem(t = datsl)
-fwdatinp$Tide <- predict(mod)
 
-# add noise (2015 paper used 0, 1, and 2 as sd)
-fwdatinp$DO_noise <- fwdatinp$DO_obs + rnorm(nrow(fwdatinp), 0, 0.5)
-fwdatinp$DO_tid <- fwdatinp$DO_obs + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
-fwdatinp$DO_tidnoise <- fwdatinp$DO_noise + 3 * (fwdatinp$Tide - mean(fwdatinp$Tide))
+apadbwq <- import_local('data/apa2021.zip', station_code = 'apadbwq') %>% 
+  qaqc(qaqc_keep = as.character(seq(-5, 5)))
+apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>% 
+  qaqc(qaqc_keep = as.character(seq(-5, 5)))
+apadb <- comb(apadbwq, apaebmet) %>% 
+  select(
+    DateTimeStamp = datetimestamp, 
+    Temp = temp, 
+    Sal = sal, 
+    DO_obs = do_mgl, 
+    ATemp = atemp, 
+    BP = bp, 
+    WSpd = wspd, 
+    Tide = depth
+  ) %>% 
+  filter(!is.na(Tide) | !is.na(DO_obs))
 
-sub <- 10000:12000
+apadbdtd <- wtreg(apadb, wins = list(6, 12, 0.8), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
 
-plot(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], col = NA, type = 'l')
+save(apadbdtd, file = here('data/apadbdtd.RData'))
 
-lines(DO_tid ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
-lines(DO_noise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'darkgreen', lwd = 1)
-lines(DO_tidnoise ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'blue', lwd = 1)
-lines(DO_obs ~ DateTimeStamp, data = fwdatinp[sub,], ylim  = c(0, 8), col = 'red', lwd = 1)
+# get height data - not in exdat
+load(file = here('data/apadbdtd.RData'))
+
+nosdat <- apadbdtd %>% 
+  mutate(
+    tidnoise = DO_prd - DO_nrm, 
+    obsnoise = DO_obs - DO_prd
+  ) %>% 
+  select(DateTimeStamp, tidnoise, obsnoise)
+
+
+# add tidal noise to fwdatinp - need to figure out values less than zero
+tomod <- fwdatinp %>% 
+  left_join(nosdat, by = 'DateTimeStamp') %>% 
+  mutate(
+    DO_nos = DO_obs + tidnoise + obsnoise
+  )
+
+##########
 
 tomod <- fwdatinp %>% 
-  select(-DO_obs, -DO_tid, -DO_noise) %>% 
-  rename(DO_obs = DO_tidnoise)
+  select(-tidnoise, -obsnoise, -DO_obs) %>% 
+  rename(DO_obs = DO_nos)
 
 # run model for inputs
 cl <- makeCluster(10)

@@ -447,27 +447,27 @@ save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
 
 # adding noise to fwoxy time series -----------------------------------------------------------
 
-
-apadbwq <- import_local('data/apa2021.zip', station_code = 'apadbwq') %>% 
-  qaqc(qaqc_keep = as.character(seq(-5, 5)))
-apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>% 
-  qaqc(qaqc_keep = as.character(seq(-5, 5)))
-apadb <- comb(apadbwq, apaebmet) %>% 
-  select(
-    DateTimeStamp = datetimestamp, 
-    Temp = temp, 
-    Sal = sal, 
-    DO_obs = do_mgl, 
-    ATemp = atemp, 
-    BP = bp, 
-    WSpd = wspd, 
-    Tide = depth
-  ) %>% 
-  filter(!is.na(Tide) | !is.na(DO_obs))
-
-apadbdtd <- wtreg(apadb, wins = list(6, 12, 0.8), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
-
-save(apadbdtd, file = here('data/apadbdtd.RData'))
+# # used weighted regression on 2021 apadb 
+# apadbwq <- import_local('data/apa2021.zip', station_code = 'apadbwq') %>% 
+#   qaqc(qaqc_keep = as.character(seq(-5, 5)))
+# apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>% 
+#   qaqc(qaqc_keep = as.character(seq(-5, 5)))
+# apadb <- comb(apadbwq, apaebmet) %>% 
+#   select(
+#     DateTimeStamp = datetimestamp, 
+#     Temp = temp, 
+#     Sal = sal, 
+#     DO_obs = do_mgl, 
+#     ATemp = atemp, 
+#     BP = bp, 
+#     WSpd = wspd, 
+#     Tide = depth
+#   ) %>% 
+#   filter(!is.na(Tide) | !is.na(DO_obs))
+# 
+# apadbdtd <- wtreg(apadb, wins = list(6, 12, 0.8), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
+# 
+# save(apadbdtd, file = here('data/apadbdtd.RData'))
 
 # get height data - not in exdat
 load(file = here('data/apadbdtd.RData'))
@@ -479,17 +479,15 @@ nosdat <- apadbdtd %>%
   ) %>% 
   select(DateTimeStamp, tidnoise, obsnoise)
 
-
-# add tidal noise to fwdatinp - need to figure out values less than zero
-tomod <- fwdatinp %>% 
+# add tidal noise to fwdatinp - need to figure out values less than zero (<1% of obs)
+fwdatinpnos <- fwdatinp %>% 
   left_join(nosdat, by = 'DateTimeStamp') %>% 
   mutate(
-    DO_nos = DO_obs + tidnoise + obsnoise
-  )
+    DO_nos = pmax(0, DO_obs + tidnoise + obsnoise)
+  ) %>% 
+  na.omit()
 
-##########
-
-tomod <- fwdatinp %>% 
+tomod <- fwdatinpnos %>% 
   select(-tidnoise, -obsnoise, -DO_obs) %>% 
   rename(DO_obs = DO_nos)
 
@@ -498,14 +496,13 @@ cl <- makeCluster(10)
 registerDoParallel(cl)
 
 # use interp for missing values
-restidnoise <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
+resnos <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
 
 # save ebase results for noisy ts
-save(restidnoise, file = here('data/restidnoise.RData'))
+save(resnos, file = here('data/resnos.RData'))
 
-tomod <- fwdatinp %>% 
-  select(-DO_tid, -DO_noise, DO_tidnoise) #%>% 
-# rename(DO_obs = DO_tidnoise)
+tomod <- fwdatinpnos %>% 
+  select(-obsnoise, -tidnoise, -DO_nos) 
 
 # run model for inputs
 cl <- makeCluster(10)

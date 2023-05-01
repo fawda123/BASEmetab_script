@@ -34,6 +34,8 @@ Comparison of EBASE output to Fwoxy-estimated output from Apalachicola using mul
 
 * `apacmp.R` Comparison of observed and detided DO metabolic estimates using BASEmetab, EBASE, and Odum for 2012 Apalachicola data
 
+* `fwoxyapacmp.R` Comparison of EBASE results with multiple priors for synthetic Apalachicola data
+
 * `dat_proc.R` Data prep for interoperability between packages
 
 * `funcs.R` Misc. helper functions

@@ -466,7 +466,7 @@ apacp <- comb(apacpwq, apaebmet) %>%
   ) %>%
   filter(!is.na(Tide) | !is.na(DO_obs))
 
-apacpdtd <- wtreg(apacp, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
+apacpdtd <- wtreg(apacp, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, progress = T)
 
 save(apacpdtd, file = here('data/apacpdtd.RData'))
 

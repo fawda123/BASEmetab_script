@@ -8,17 +8,17 @@ library(tidyverse)
 
 source(here('R/funcs.R'))
 
-load(file = here('data/apadbdtd.RData'))
+load(file = here('data/apacpdtd.RData'))
 
 # depth at site
-depth <-  apadbdtd$Tide %>% mean()
+depth <-  apacpdtd$Tide %>% mean()
 
 # Odum, obs ------------------------------------------------------------------------------------
 
-tmp <- apadbdtd %>% 
+tmp <- apacpdtd %>% 
   select(DateTimeStamp, Temp, Sal, DO_mgl = DO_obs, ATemp, BP, WSpd, Tide)
 
-opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
 
 # all units to mmol O2 m-2 d-1
@@ -37,7 +37,7 @@ opmetaball <- opmetab %>%
 
 # EBASE, obs ------------------------------------------------------------------------------------
 
-tmp <- apadbdtd %>% 
+tmp <- apacpdtd %>% 
   select(DateTimeStamp, DO_obs, Temp, Sal, PAR = totpar, WSpd)
 
 # setup parallel backend
@@ -75,10 +75,10 @@ apaobscmp <- bind_rows(opmetaball, ebmetaball)
 
 # Odum, dtd ------------------------------------------------------------------------------------
 
-tmp <- apadbdtd %>% 
+tmp <- apacpdtd %>% 
   select(DateTimeStamp, Temp, Sal, DO_mgl = DO_nrm, ATemp, BP, WSpd, Tide)
 
-opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.75, long = -85, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+opmetab <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
 
 # all units to mmol O2 m-2 d-1
@@ -97,7 +97,7 @@ opmetaball <- opmetab %>%
 
 # EBASE, dtd ------------------------------------------------------------------------------------
 
-tmp <- apadbdtd %>% 
+tmp <- apacpdtd %>% 
   select(DateTimeStamp, DO_obs = DO_nrm, Temp, Sal, PAR = totpar, WSpd)
 
 # setup parallel backend

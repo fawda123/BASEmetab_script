@@ -447,12 +447,12 @@ save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
 
 # adding noise to fwoxy time series -----------------------------------------------------------
 
-# used weighted regression on 2021 apadb
-apadbwq <- import_local('data/apa2021.zip', station_code = 'apadbwq') %>%
+# used weighted regression on 2021 apacp
+apacpwq <- import_local('data/apa2021.zip', station_code = 'apacpwq') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
 apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
-apadb <- comb(apadbwq, apaebmet) %>%
+apacp <- comb(apacpwq, apaebmet) %>%
   select(
     DateTimeStamp = datetimestamp,
     Temp = temp,
@@ -466,14 +466,14 @@ apadb <- comb(apadbwq, apaebmet) %>%
   ) %>%
   filter(!is.na(Tide) | !is.na(DO_obs))
 
-apadbdtd <- wtreg(apadb, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
+apacpdtd <- wtreg(apacp, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.6747, long = -85.0583, progress = T)
 
-save(apadbdtd, file = here('data/apadbdtd.RData'))
+save(apacpdtd, file = here('data/apacpdtd.RData'))
 
 # get height data - not in exdat
-load(file = here('data/apadbdtd.RData'))
+load(file = here('data/apacpdtd.RData'))
 
-nosdat <- apadbdtd %>% 
+nosdat <- apacpdtd %>% 
   mutate(
     tidnoise = DO_prd - DO_nrm, 
     obsnoise = DO_obs - DO_prd

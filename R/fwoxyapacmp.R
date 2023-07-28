@@ -44,9 +44,11 @@ fwdatinp <- fwdat %>%
     H = `ht,m`
   ) %>% 
   mutate(
+    # DateTimeStamp = floor_date(DateTimeStamp, unit = 'hours'),
     DO_obs = DO_obs / 1000 * 32, # to mg/L
     WSpd = sqrt(WSpd)
-  )
+  ) #%>% 
+# summarise(across(everything(), ~mean(.x, na.rm = T)), .by = 'DateTimeStamp')
 
 # # simple comparison ---------------------------------------------------------------------------
 #

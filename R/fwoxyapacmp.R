@@ -517,3 +517,24 @@ resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 
 # save ebase results for observed (synthetic) ts
 save(resobs, file = here('data/resobs.RData'))
 
+# missing data summary for apacp --------------------------------------------------------------
+
+# used weighted regression on 2021 apacp
+apacpwq <- import_local('data/apa2021.zip', station_code = 'apacpwq') %>%
+  qaqc(qaqc_keep = as.character(seq(-5, 5)))
+apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>%
+  qaqc(qaqc_keep = as.character(seq(-5, 5)))
+cmbdat <- comb(apacpwq, apaebmet) %>%
+  select(
+    DateTimeStamp = datetimestamp,
+    Temp = temp,
+    Sal = sal,
+    DO_obs = do_mgl,
+    WSpd = wspd,
+    totpar
+  )
+misdat <- cmbdat %>% 
+  reframe(across(-DateTimeStamp, function(x) sum(is.na(x)) / length(x))) %>% 
+  mutate(across(everything(), function(x) round(100 * x, 1)))
+
+save(misdat, file = here('data/misdat.RData'))          

@@ -38,7 +38,7 @@ opmetaball <- opmetab %>%
 # EBASE, obs ------------------------------------------------------------------------------------
 
 tmp <- apacpdtd %>% 
-  select(DateTimeStamp, DO_obs, Temp, Sal, PAR = totpar, WSpd)
+  select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd)
 
 # setup parallel backend
 ncores <- detectCores()
@@ -98,7 +98,7 @@ opmetaball <- opmetab %>%
 # EBASE, dtd ------------------------------------------------------------------------------------
 
 tmp <- apacpdtd %>% 
-  select(DateTimeStamp, DO_obs = DO_nrm, Temp, Sal, PAR = totpar, WSpd)
+  select(DateTimeStamp, DO_obs = DO_nrm, Temp, Sal, PAR, WSpd)
 
 # setup parallel backend
 ncores <- detectCores()

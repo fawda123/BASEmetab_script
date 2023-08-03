@@ -449,12 +449,18 @@ save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
 
 # adding noise to fwoxy time series -----------------------------------------------------------
 
+# for PAR conversion to W/m2
+Jpmolph <-  0.2175e6 # 1 mol-photons = 0.2175e6 J for ave PAR wavelength of 550nm
+
 # used weighted regression on 2021 apacp
 apacpwq <- import_local('data/apa2021.zip', station_code = 'apacpwq') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
 apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
 apacp <- comb(apacpwq, apaebmet) %>%
+  mutate(
+    PAR = totpar * Jpmolph * 1e-3 / 15/ 60, # mmol/m2/15min to W/m2
+  ) %>% 
   select(
     DateTimeStamp = datetimestamp,
     Temp = temp,
@@ -463,7 +469,7 @@ apacp <- comb(apacpwq, apaebmet) %>%
     ATemp = atemp,
     BP = bp,
     WSpd = wspd,
-    totpar,
+    PAR,
     Tide = depth
   ) %>%
   filter(!is.na(Tide) | !is.na(DO_obs))
@@ -519,19 +525,25 @@ save(resobs, file = here('data/resobs.RData'))
 
 # missing data summary for apacp --------------------------------------------------------------
 
+# for PAR conversion to W/m2
+Jpmolph <-  0.2175e6 # 1 mol-photons = 0.2175e6 J for ave PAR wavelength of 550nm
+
 # used weighted regression on 2021 apacp
 apacpwq <- import_local('data/apa2021.zip', station_code = 'apacpwq') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
 apaebmet <- import_local('data/apa2021.zip', station_code = 'apaebmet') %>%
   qaqc(qaqc_keep = as.character(seq(-5, 5)))
 cmbdat <- comb(apacpwq, apaebmet) %>%
+  mutate(
+    PAR = totpar * Jpmolph * 1e-3 / 15/ 60, # mmol/m2/15min to W/m2
+  ) %>% 
   select(
     DateTimeStamp = datetimestamp,
     Temp = temp,
     Sal = sal,
     DO_obs = do_mgl,
     WSpd = wspd,
-    totpar
+    PAR
   )
 misdat <- cmbdat %>% 
   reframe(across(-DateTimeStamp, function(x) sum(is.na(x)) / length(x))) %>% 

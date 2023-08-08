@@ -50,48 +50,6 @@ fwdatinp <- fwdat %>%
   ) #%>% 
 # summarise(across(everything(), ~mean(.x, na.rm = T)), .by = 'DateTimeStamp')
 
-# # simple comparison ---------------------------------------------------------------------------
-#
-# # subset four days in June
-# dat <- fwdatinp %>%
-#   filter(month(fwdatinp$DateTimeStamp) == 6 & day(fwdatinp$DateTimeStamp) %in% 1:4)
-# 
-# cl <- makeCluster(4)
-# registerDoParallel(cl)
-# 
-# res <- ebase(dat, interval = 900, H = dat$H, progress = TRUE, n.chains = 4, interp = T)
-# 
-# stopCluster(cl)
-# 
-# fwdatinpcmp <- fwdatcmp %>% 
-#   filter(Date <= max(res$Date) & Date >= min(res$Date))
-# 
-# cmp <- inner_join(fwdatcmp, res, by = c('Date', 'DateTimeStamp')) %>% 
-#   select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>% 
-#   rename(
-#     DO_mod.x = DO_obs.x, 
-#     DO_mod.y = DO_mod
-#   ) %>% 
-#   pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>% 
-#   separate(var, c('var', 'mod'), sep = '\\.') %>% 
-#   mutate(
-#     mod = case_when(
-#       mod == 'x' ~ 'Fwoxy', 
-#       mod == 'y' ~ 'EBASE'
-#     )
-#   ) %>% 
-#   pivot_wider(names_from = 'mod', values_from = 'val')
-# 
-# ggplot(cmp, aes(x = Fwoxy, y = EBASE, color = var)) + 
-#   geom_point() +
-#   facet_wrap(~var, ncol = 2, scales = 'free') +
-#   theme_bw() + 
-#   geom_abline(intercept = 0, slope = 1) +
-#   theme(
-#     legend.title = element_blank(),
-#     strip.background = element_blank()
-#   )
-
 # gridded comparisons, mean and sd, 1 day -----------------------------------------------------
 
 # this takes about 24 hours to run
@@ -245,44 +203,6 @@ apagrd30b <- apagrd[33:64,]
 save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
 save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
 
-# synthetic with EBASE defaults -------------------------------------------
-
-# this takes about 2 hours to run
-grd <- crossing(
-  ndays = c(1, 7, 30),
-  out = NA
-)
-
-str <- Sys.time()
-
-for(i in 1:nrow(grd)){
-  
-  # counter
-  cat(i, 'of', nrow(grd), '\n')
-  print(Sys.time() - str)
-  
-  # get inputs
-  selrow <- grd[i, ]
-  ndays <- c(selrow$ndays)
-  
-  # run model for inputs
-  cl <- makeCluster(10)
-  registerDoParallel(cl)
-  
-  # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
-               ndays = ndays)
-  
-  stopCluster(cl)
-  
-  # append output to grd
-  grd$out[[i]] <- list(res)
-  
-}
-
-ebasedefault <- grd
-save(ebasedefault, file = here('data/ebasedefault.RData'), compress = 'xz')
-
 # evaluate fit all priors -------------------------------------------------
 
 load(file = here('data/apagrd1a.RData'))
@@ -344,108 +264,6 @@ apasumdat <- apagrd %>%
   select(-out)
 
 save(apasumdat, file = here('data/apasumdat.RData'), compress = 'xz')
-
-# gridded comparison, b mean changes ----------------------------------------------------------
-
-# this takes about ten hours to run
-grd <- crossing(
-  amean = 0.2, #c(0, 0.2, 2),
-  asd = 0.1,
-  rmean = 20, #c(0, 20, 200), 
-  rsd = 5, 
-  bmean = c(0.1255, 0.251, 0.502), # 0.251 / 2, 0.251, 0.251 * 2
-  bsd = c(0.001, 0.01, 0.1),
-  ndays = c(1, 7),
-  out = NA
-)
-
-str <- Sys.time()
-
-# takes about 20 hours
-for(i in 1:nrow(grd)){
-  
-  # counter
-  cat(i, 'of', nrow(grd), '\n')
-  print(Sys.time() - str)
-  
-  # get inputs
-  selrow <- grd[i, ]
-  aprior <- c(selrow$amean, selrow$asd)
-  rprior <- c(selrow$rmean, selrow$rsd)
-  bprior <- c(selrow$bmean, selrow$bsd)
-  ndays <- c(selrow$ndays)
-  
-  # run model for inputs
-  cl <- makeCluster(6)
-  registerDoParallel(cl)
-  
-  # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
-  
-  stopCluster(cl)
-  
-  # append output to grd
-  grd$out[[i]] <- list(res)
-  
-}
-
-apagrdmean <- grd
-save(apagrdmean, file = 'data/apagrdmean.RData', compress = 'xz')
-
-# evaluate fit, b mean changes ----------------------------------------------------------------
-
-load(file = here('data/apagrdmean.RData'))
-
-apasumdatmean <- apagrdmean %>% 
-  mutate(
-    ind = 1:nrow(.),
-    ests = purrr::pmap(list(ind, out), function(ind, out){
-      
-      cat(ind, '\t')
-      
-      cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
-        select(-converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
-        rename(
-          DO_mod.x = DO_obs.x,
-          DO_mod.y = DO_mod
-        ) %>%
-        pivot_longer(!all_of(c('DateTimeStamp', 'Date', 'grp')), names_to = 'var', values_to = 'val') %>%
-        separate(var, c('var', 'mod'), sep = '\\.') %>%
-        mutate(
-          mod = case_when(
-            mod == 'x' ~ 'Fwoxy',
-            mod == 'y' ~ 'EBASE'
-          )
-        ) %>%
-        pivot_wider(names_from = 'mod', values_from = 'val')
-      
-      sumgrp <- cmp %>% 
-        filter(var %in% c('a', 'Rt_vol', 'b')) %>% 
-        group_by(grp, var) %>% 
-        summarise(
-          Fwoxy = mean(Fwoxy, na.rm = T), 
-          EBASE = mean(EBASE, na.rm = T), 
-          .groups = 'drop'
-        ) 
-      sumtms <- cmp %>% 
-        filter(!var %in% c('a', 'Rt_vol', 'b'))
-      
-      sumcmp <- bind_rows(sumgrp, sumtms) %>% 
-        group_by(var) %>% 
-        nest() %>% 
-        summarise(
-          est = purrr::map(data, sumfun)
-        ) %>% 
-        unnest('est')
-      
-      return(sumcmp)
-      
-    })
-  ) %>% 
-  select(-out)
-
-save(apasumdatmean, file = here('data/apasumdatmean.RData'), compress = 'xz')
 
 # adding noise to fwoxy time series -----------------------------------------------------------
 

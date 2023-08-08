@@ -100,8 +100,8 @@ grd <- crossing(
   asd = c(0.01, 1),
   rmean = c(0, 200), 
   rsd = c(0.5, 50),
-  bmean = c(0, 0.502), 
-  bsd = c(0.001, 0.1),
+  # bmean = c(0, 0.502), 
+  # bsd = c(0.001, 0.1),
   ndays = c(1),
   out = NA
 )

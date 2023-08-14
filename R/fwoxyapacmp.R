@@ -44,11 +44,9 @@ fwdatinp <- fwdat %>%
     H = `ht,m`
   ) %>% 
   mutate(
-    # DateTimeStamp = floor_date(DateTimeStamp, unit = 'hours'),
     DO_obs = DO_obs / 1000 * 32, # to mg/L
     WSpd = sqrt(WSpd)
-  ) #%>% 
-# summarise(across(everything(), ~mean(.x, na.rm = T)), .by = 'DateTimeStamp')
+  )
 
 # gridded comparisons, mean and sd, 1 day -----------------------------------------------------
 
@@ -193,14 +191,11 @@ save(apagrd30, file = 'data/apagrd30.RData', compress = 'xz')
 
 # evaluate fit all priors -------------------------------------------------
 
-load(file = here('data/apagrd1a.RData'))
-load(file = here('data/apagrd1b.RData'))
-load(file = here('data/apagrd7a.RData'))
-load(file = here('data/apagrd7b.RData'))
-load(file = here('data/apagrd30a.RData'))
-load(file = here('data/apagrd30b.RData'))
+load(file = here('data/apagrd1.RData'))
+load(file = here('data/apagrd7.RData'))
+load(file = here('data/apagrd30.RData'))
 
-apagrd <- bind_rows(apagrd1a, apagrd1b, apagrd7a, apagrd7b, apagrd30a, apagrd30b)
+apagrd <- bind_rows(apagrd1, apagrd7, apagrd30)
 
 apasumdat <- apagrd %>% 
   mutate(
@@ -210,9 +205,6 @@ apasumdat <- apagrd %>%
       cat(ind, '\t')
 
       cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
-        mutate(
-          a.x = a.x / H # need to convert a to m-3, ebase output is m-3, fwoxy is m-2
-        ) %>% 
         select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
           DO_mod.x = DO_obs.x,

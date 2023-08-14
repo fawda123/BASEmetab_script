@@ -54,12 +54,10 @@ fwdatinp <- fwdat %>%
 
 # this takes about 24 hours to run
 grd <- crossing(
-  amean = c(0, 2),
-  asd = c(0.01, 1),
-  rmean = c(0, 200), 
-  rsd = c(0.5, 50),
-  # bmean = c(0, 0.502), 
-  # bsd = c(0.001, 0.1),
+  amean = c(2, 14.4),
+  asd = c(0.225, 22.5),
+  rmean = c(138, 1009), 
+  rsd = c(17, 1700),
   ndays = c(1),
   out = NA
 )
@@ -77,7 +75,6 @@ for(i in 1:nrow(grd)){
   selrow <- grd[i, ]
   aprior <- c(selrow$amean, selrow$asd)
   rprior <- c(selrow$rmean, selrow$rsd)
-  bprior <- c(selrow$bmean, selrow$bsd)
   ndays <- c(selrow$ndays)
   
   # run model for inputs
@@ -86,7 +83,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, ndays = ndays)
   
   stopCluster(cl)
   
@@ -95,22 +92,17 @@ for(i in 1:nrow(grd)){
   
 }
 
-apagrd <- grd
-apagrd1a <- apagrd[1:32,]
-apagrd1b <- apagrd[33:64,]
-save(apagrd1a, file = 'data/apagrd1a.RData', compress = 'xz')
-save(apagrd1b, file = 'data/apagrd1b.RData', compress = 'xz')
+apagrd1 <- grd
+save(apagrd1, file = 'data/apagrd1.RData', compress = 'xz')
 
 # gridded comparisons, mean and sd, 7 day -----------------------------------------------------
 
 # this takes about 24 hours to run
 grd <- crossing(
-  amean = c(0, 2),
-  asd = c(0.01, 1),
-  rmean = c(0, 200), 
-  rsd = c(0.5, 50),
-  bmean = c(0, 0.502), 
-  bsd = c(0.001, 0.1),
+  amean = c(2, 14.4),
+  asd = c(0.225, 22.5),
+  rmean = c(138, 1009), 
+  rsd = c(17, 1700),
   ndays = c(7),
   out = NA
 )
@@ -128,7 +120,6 @@ for(i in 1:nrow(grd)){
   selrow <- grd[i, ]
   aprior <- c(selrow$amean, selrow$asd)
   rprior <- c(selrow$rmean, selrow$rsd)
-  bprior <- c(selrow$bmean, selrow$bsd)
   ndays <- c(selrow$ndays)
   
   # run model for inputs
@@ -137,7 +128,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, ndays = ndays)
   
   stopCluster(cl)
   
@@ -146,22 +137,20 @@ for(i in 1:nrow(grd)){
   
 }
 
-apagrd <- grd
-apagrd7a <- apagrd[1:32,]
-apagrd7b <- apagrd[33:64,]
-save(apagrd7a, file = 'data/apagrd7a.RData', compress = 'xz')
-save(apagrd7b, file = 'data/apagrd7b.RData', compress = 'xz')
+# load(file = 'data/agrd7to12.RData')
+# apagrd7to12$out[13:16] <- grd$out[13:16]
+# apagrd7 <- apagrd7to12
+apagrd7 <- grd
+save(apagrd7, file = 'data/apagrd7.RData', compress = 'xz')
 
 # gridded comparisons, mean and sd, 30 day ----------------------------------------------------
 
 # this takes about 48 hours to run
 grd <- crossing(
-  amean = c(0, 2),
-  asd = c(0.01, 1),
-  rmean = c(0, 200), 
-  rsd = c(0.5, 50),
-  bmean = c(0, 0.502), 
-  bsd = c(0.001, 0.1),
+  amean = c(2, 14.4),
+  asd = c(0.225, 22.5),
+  rmean = c(138, 1009), 
+  rsd = c(17, 1700),
   ndays = c(30),
   out = NA
 )
@@ -179,7 +168,6 @@ for(i in 1:nrow(grd)){
   selrow <- grd[i, ]
   aprior <- c(selrow$amean, selrow$asd)
   rprior <- c(selrow$rmean, selrow$rsd)
-  bprior <- c(selrow$bmean, selrow$bsd)
   ndays <- c(selrow$ndays)
   
   # run model for inputs
@@ -188,7 +176,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = bprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, ndays = ndays)
   
   stopCluster(cl)
   
@@ -197,11 +185,11 @@ for(i in 1:nrow(grd)){
   
 }
 
-apagrd <- grd
-apagrd30a <- apagrd[1:32,]
-apagrd30b <- apagrd[33:64,]
-save(apagrd30a, file = 'data/apagrd30a.RData', compress = 'xz')
-save(apagrd30b, file = 'data/apagrd30b.RData', compress = 'xz')
+# load(file = 'data/apagrd30to8.RData')
+# apagrd30to8$out[9:16] <- grd$out[9:16]
+# apagrd30 <- apagrd30to8
+apagrd30 <- grd
+save(apagrd30, file = 'data/apagrd30.RData', compress = 'xz')
 
 # evaluate fit all priors -------------------------------------------------
 

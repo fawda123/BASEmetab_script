@@ -52,10 +52,10 @@ fwdatinp <- fwdat %>%
 
 # this takes about 24 hours to run
 grd <- crossing(
-  amean = c(2, 14.4),
-  asd = c(0.225, 22.5),
-  rmean = c(138, 1009), 
-  rsd = c(17, 1700),
+  amean = c(2, 12),
+  asd = c(0.4, 40),
+  rmean = c(150, 900), 
+  rsd = c(30, 3000),
   ndays = c(1),
   out = NA
 )
@@ -97,10 +97,10 @@ save(apagrd1, file = 'data/apagrd1.RData', compress = 'xz')
 
 # this takes about 24 hours to run
 grd <- crossing(
-  amean = c(2, 14.4),
-  asd = c(0.225, 22.5),
-  rmean = c(138, 1009), 
-  rsd = c(17, 1700),
+  amean = c(2, 12),
+  asd = c(0.4, 40),
+  rmean = c(150, 900), 
+  rsd = c(30, 3000),
   ndays = c(7),
   out = NA
 )
@@ -145,10 +145,10 @@ save(apagrd7, file = 'data/apagrd7.RData', compress = 'xz')
 
 # this takes about 48 hours to run
 grd <- crossing(
-  amean = c(2, 14.4),
-  asd = c(0.225, 22.5),
-  rmean = c(138, 1009), 
-  rsd = c(17, 1700),
+  amean = c(2, 12),
+  asd = c(0.4, 40),
+  rmean = c(150, 900), 
+  rsd = c(30, 3000),
   ndays = c(30),
   out = NA
 )

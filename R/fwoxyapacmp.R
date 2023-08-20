@@ -76,7 +76,7 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(10)
+  cl <- makeCluster(6)
   registerDoParallel(cl)
   
   # use interp for missing values
@@ -121,7 +121,7 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(10)
+  cl <- makeCluster(6)
   registerDoParallel(cl)
   
   # use interp for missing values

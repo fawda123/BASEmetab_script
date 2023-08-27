@@ -81,7 +81,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   
@@ -126,7 +126,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   
@@ -174,7 +174,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   

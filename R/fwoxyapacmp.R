@@ -222,7 +222,7 @@ apasumdat <- apagrd %>%
       
       # average output by optimization period
       sumgrp <- cmp %>% 
-        group_by(grp, var) %>% 
+        group_by(Date, var) %>% 
         summarise(
           Fwoxy = mean(Fwoxy, na.rm = T), 
           EBASE = mean(EBASE, na.rm = T), 

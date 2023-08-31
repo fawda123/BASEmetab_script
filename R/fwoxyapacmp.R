@@ -81,7 +81,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   
@@ -126,7 +126,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   
@@ -174,7 +174,7 @@ for(i in 1:nrow(grd)){
   
   # use interp for missing values
   res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, ndays = ndays)
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
   
@@ -203,7 +203,7 @@ apasumdat <- apagrd %>%
     ests = purrr::pmap(list(ind, out), function(ind, out){
       
       cat(ind, '\t')
-
+      
       cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
         select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
@@ -222,13 +222,13 @@ apasumdat <- apagrd %>%
       
       # average output by optimization period
       sumgrp <- cmp %>% 
-        group_by(Date, var) %>% 
+        group_by(grp, var) %>% 
         summarise(
           Fwoxy = mean(Fwoxy, na.rm = T), 
           EBASE = mean(EBASE, na.rm = T), 
           .groups = 'drop'
         ) 
-
+      
       sumcmp <- sumgrp %>% 
         group_by(var) %>% 
         nest() %>% 

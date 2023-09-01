@@ -303,7 +303,7 @@ cl <- makeCluster(10)
 registerDoParallel(cl)
 
 # use interp for missing values
-resnos <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
+resnos <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
 
 # save ebase results for noisy ts
 save(resnos, file = here('data/resnos.RData'))
@@ -316,7 +316,7 @@ cl <- makeCluster(10)
 registerDoParallel(cl)
 
 # use interp for missing values
-resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, n.chains = 4, ndays = 7)
+resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
 
 # save ebase results for observed (synthetic) ts
 save(resobs, file = here('data/resobs.RData'))

@@ -75,6 +75,33 @@ apadef <- list(
 
 save(apadef, file = 'data/apadef.RData', compress = 'xz')
 
+# recovery default priors 7, 30 day opt, fixed b ----------------------------------------------
+
+# 7 days opt
+cl <- makeCluster(6)
+registerDoParallel(cl)
+
+res7 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+              ndays = 7, bprior = c(0.251, 1e-6))
+
+stopCluster(cl)
+
+# 30 days opt
+cl <- makeCluster(6)
+registerDoParallel(cl)
+
+res30 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+               ndays = 30, bprior = c(0.251, 1e-6))
+
+stopCluster(cl)
+
+apadeffix <- list(
+  opt7 = res7, 
+  opt30 = res30
+)
+
+save(apadeffix, file = 'data/apadeffix.RData', compress = 'xz')
+
 # gridded comparisons, mean and sd, 1 day -----------------------------------------------------
 
 # this takes about 24 hours to run

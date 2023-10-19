@@ -251,14 +251,26 @@ load(file = here('data/apagrd30.RData'))
 
 apagrd <- bind_rows(apagrd1, apagrd7, apagrd30)
 
+# # view incomplete groups
+# lapply(apagrd$out, function(x) table(x[[1]]$grp))
 apasumdat <- apagrd %>% 
   mutate(
     ind = 1:nrow(.),
     ests = purrr::pmap(list(ind, out), function(ind, out){
       
       cat(ind, '\t')
+
+      # filter incomplete groups for 7, 30 day opt
+      if(ind %in% 1:16)
+        out <- out[[1]]
+      if(ind %in% 17:32)
+        out <- out[[1]] %>% 
+          filter(grp != 53)
+      if(ind %in% 33:48)
+        out <- out[[1]] %>% 
+          filter(grp != 13)
       
-      cmp <- inner_join(fwdatcmp, out[[1]], by = c('Date', 'DateTimeStamp')) %>%
+      cmp <- inner_join(fwdatcmp, out, by = c('Date', 'DateTimeStamp')) %>%
         select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
           DO_mod.x = DO_obs.x,

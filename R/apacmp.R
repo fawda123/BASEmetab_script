@@ -47,7 +47,7 @@ cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # ebase, fix b
-res <- ebase(tmp, interval = 900, H = depth, progress = TRUE, n.chains = 4,
+res <- ebase(tmp, interval = 900, Z = depth, progress = getwd(), n.chains = 4,
              bprior = c(0.251, 1e-6))
 
 stopCluster(cl)
@@ -109,7 +109,7 @@ cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # ebase, fix b
-res <- ebase(tmp, interval = 900, H = depth, progress = TRUE, n.chains = 4,
+res <- ebase(tmp, interval = 900, Z = depth, progress = getwd(), n.chains = 4,
              bprior = c(0.251, 1e-6))
 
 stopCluster(cl)

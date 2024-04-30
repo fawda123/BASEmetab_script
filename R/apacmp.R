@@ -39,7 +39,7 @@ opmetaball <- opmetab %>%
 # EBASE, obs ------------------------------------------------------------------------------------
 
 tmp <- apacpdtd %>% 
-  select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd)
+  select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd, depth = Tide)
 
 # setup parallel backend
 ncores <- detectCores()
@@ -47,7 +47,7 @@ cl <- makeCluster(ncores - 2)
 registerDoParallel(cl)
 
 # ebase, fix b
-res <- ebase(tmp, interval = 900, Z = depth, progress = getwd(), n.chains = 4,
+res <- ebase(tmp, interval = 900, Z = tmp$depth + 0.3, progress = getwd(), ndays = 7, n.chains = 4,
              bprior = c(0.251, 1e-6))
 
 stopCluster(cl)
@@ -74,7 +74,7 @@ ebmetaball <- res %>%
 
 apaobscmp <- bind_rows(opmetaball, ebmetaball)
 
-# save(apaobscmp, file = here('data/apaobscmp.RData'))
+save(apaobscmp, file = here('data/apaobscmp.RData'))
 
 # Odum, dtd ------------------------------------------------------------------------------------
 

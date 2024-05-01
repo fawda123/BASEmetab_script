@@ -1,0 +1,131 @@
+---
+title: "EBASE cat point optimization eval"
+execute:
+  echo: false
+  warning: false
+filters:
+  - lightbox
+
+lightbox: auto
+---
+  
+```{r}
+#| include: false
+library(tidyverse)
+library(patchwork)
+library(here)
+library(WtRegDO)
+
+## 
+# odum
+
+load(file = here('data/apacpdtd.RData'))
+
+# depth at site
+depth <-  apacpdtd$Tide %>% mean() + 0.3
+
+tmp <- apacpdtd %>% 
+  select(DateTimeStamp, Temp, Sal, DO_mgl = DO_obs, ATemp, BP, WSpd, Tide)
+
+opmetabfixz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+                    depth_val = NULL, depth_vec = depth, instant = T)
+opmetabvarz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+                    depth_val = NULL, depth_vec = tmp$Tide + 0.3, instant = T)
+
+# all units to mmol O2 m-2 d-1
+opmetaball <- list(
+  '1 day, fix Z' = opmetabfixz,
+  '1 day, var Z' = opmetabvarz
+  ) %>% 
+  enframe() %>% 
+  unnest('value') %>% 
+  group_by(metab_date, name) %>% 
+  summarize(
+    D = mean(D, na.rm = T), 
+    P = mean(Pg, na.rm = T), 
+    R = -1 * mean(Rt, na.rm = T), 
+    NEM = mean(NEM, na.rm = T), 
+    .groups = 'drop'
+  ) %>% 
+  rename(Date = metab_date) %>% 
+  gather('var', 'val', -Date, -name)
+
+odum <- opmetaball %>%
+  mutate(
+    mo = month(Date)
+  ) %>% 
+  summarise(
+    medv = mean(val, na.rm = T),
+    .by = c(name, mo, var)
+  ) %>% 
+  separate(name, c('opt', 'depth'), sep = ', ') 
+
+##
+# ebase results (include odum as fixed depth)
+
+load(file = here('data/apaobscmp1day.RData'))
+load(file = here('data/apaobscmp1dayvarz.RData'))
+load(file = here('data/apaobscmp7day.RData'))
+load(file = here('data/apaobscmp7dayvarz.RData'))
+
+ebse <- list(
+  '1 day, fix Z' = apaobscmp1day,
+  '1 day, var Z' = apaobscmp1dayvarz,
+  '7 day, fix Z' = apaobscmp7day,
+  '7 day, var Z' = apaobscmp7dayvarz
+  ) %>% 
+  enframe()  %>% 
+  unnest(value) %>% 
+  mutate(
+    mo = month(Date)
+  ) %>% 
+  summarise(
+    medv = mean(val, na.rm = T),
+    .by = c(name, mo, var, typ)
+  ) %>% 
+  separate(name, c('opt', 'depth'), sep = ', ') %>% 
+  filter(typ == 'EBASE')
+```
+
+The following shows the effect of changing the optimization period and depth variable used to estimate metabolic parameters with EBASE at Cat Point Station for 2021 data.  The optimization periods were 1 or 7 days and depth was fixed as the mean or continuous as tidal height.  All results are averaged at the monthly scale. The Odum results were also evaluated depth as fixed or continuous.  All results are based on observed dissolved oxygen data.
+
+```{r}
+#| fig-height: 6
+#| fig-width: 8
+p1 <- ggplot(ebse, aes(x = mo, y = medv, color = depth)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(opt~var) +
+  theme_minimal() + 
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(
+    title = 'EBASE',
+    color = 'Depth',
+    x = NULL,
+    y = 'mmol O2 m2 d-1'
+  )
+p2 <- ggplot(odum, aes(x = mo, y = medv, color = depth)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(~var) +
+  theme_minimal() + 
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(
+    title = 'Odum',
+    x = NULL,
+    y = 'mmol O2 m2 d-1', 
+    color = 'Depth'
+  )
+p1 + p2 + plot_layout(ncol = 1, heights = c(1, 0.5), guides = 'collect') & 
+  theme(legend.position = 'bottom', 
+        axis.text.x = element_text(angle = 45, hjust = 1, size= 6)
+        )
+```

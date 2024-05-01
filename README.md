@@ -12,6 +12,8 @@ Comparison of model optimization length for EBASE with 2012 Apalachicola data, o
 
 Comparison of EBASE output to Fwoxy-estimated output from Apalachicola using multiple priors, [here](https://fawda123.github.io/BASEmetab_script/fwoxyapacmp)
 
+Comparison of EBASE using 2021 Cat Point data to evaluate optimization period and depth as fixed or constant, [here](https://fawda123.github.io/BASEmetab_script/ebasecpoptdep)
+
 ## R scripts 
 
 * `script1.R` Run stripped down BASEmetab code with 2012 Appalachicola data

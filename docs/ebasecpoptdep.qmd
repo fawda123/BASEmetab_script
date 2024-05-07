@@ -22,7 +22,7 @@ library(WtRegDO)
 load(file = here('data/apacpdtd.RData'))
 
 # depth at site
-depth <-  apacpdtd$Tide %>% mean() + 0.3
+depth <-  apacpdtd$Tide %>% mean()
 
 tmp <- apacpdtd %>% 
   select(DateTimeStamp, Temp, Sal, DO_mgl = DO_obs, ATemp, BP, WSpd, Tide)
@@ -30,7 +30,7 @@ tmp <- apacpdtd %>%
 opmetabfixz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
 opmetabvarz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
-                    depth_val = NULL, depth_vec = tmp$Tide + 0.3, instant = T)
+                    depth_val = NULL, depth_vec = tmp$Tide, instant = T)
 
 # all units to mmol O2 m-2 d-1
 opmetaball <- list(

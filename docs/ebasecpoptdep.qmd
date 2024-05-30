@@ -150,7 +150,7 @@ p1 + p2 + plot_layout(ncol = 1, heights = c(1, 0.5), guides = 'collect') &
         )
 ```
 
-Metabolism results for both EBASE and Odum using variable depth show an inverse relationship of P and R with season, where both are lower in the summer, which is counter-intuitive to expectations. The Odum results were not previously inversed using continuous depth, where the results herein used a slightly modified version of the `ecometab()` function from WtRegDO that converts volumetric dissolved oxygen (mmol O$_2$ m$^{-3}$) to areal dissolved oxygen (mmol O$_2$ m$^{-2}$) using the same approach as EBASE.  For both cases, areal dissolved oxygen is calculated prior to estimating any metabolic parameters by simply multiply dissolved oxygen by depth. For variable depth, this is the continuous tidal height vector.  An example of the resulting areal dissolved oxygen time series is below using fixed and variable depth. 
+Metabolism results for both EBASE and Odum using variable depth show an inverse relationship of P and R with season, where both are lower in the summer, which is counter-intuitive to expectations. The  Odum results were not previously inversed using continuous depth, where the results herein used a slightly modified version of the `ecometab()` function from WtRegDO that converts volumetric dissolved oxygen (mmol O$_2$ m$^{-3}$) to areal dissolved oxygen (mmol O$_2$ m$^{-2}$) using the same approach as EBASE.  For both cases, areal dissolved oxygen is calculated prior to estimating any metabolic parameters by simply multiply dissolved oxygen by depth. For variable depth, this is the continuous tidal height vector.  An example of the resulting areal dissolved oxygen time series is below using fixed and variable depth. 
 
 ```{r}
 ebasein <- apacpdtd %>%
@@ -271,7 +271,7 @@ p <- subplot(p1, p2, p3, p4, p5, p6, p7, shareX = T, shareY = T, nrows = 7) %>%
 p
 ```
 
-The SA component has the largest amplitude and a frequency of once per year, with peaks in the summer and troughs in the winter. This regular periodicity may be influencing the areal dissolved oxygen estimate. However, this component is not readily visible by simply averaging the tidal height time series each month for the three years of data used above.
+The SA component has the largest amplitude and a frequency of once per year, with peaks in the summer and troughs in the winter. This regular periodicity may be influencing the areal dissolved oxygen estimate. This component is somewhat visible by simply averaging the tidal height time series each month for the two years of data used above.
 
 ```{r}
 #| fig-height: 4

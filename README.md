@@ -38,6 +38,8 @@ Comparison of EBASE using 2021 Cat Point data to evaluate optimization period an
 
 * `fwoxyapacmp.R` Comparison of EBASE results with multiple priors for synthetic Apalachicola data
 
+* `varzfixz.R` Create EBASE results with 2021 Cat Point data to evaluate optimization period and depth as fixed or constant
+
 * `dat_proc.R` Data prep for interoperability between packages
 
 * `funcs.R` Misc. helper functions

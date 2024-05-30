@@ -13,24 +13,42 @@ lightbox: auto
 #| include: false
 library(tidyverse)
 library(patchwork)
-library(here)
-library(WtRegDO)
+library(plotly)
+library(oce)
+devtools::load_all(here::here('../WtRegDO'))
+devtools::load_all(here::here('../EBASE'))
+
+##
+# longer apa cp time series for tidal constituent est
+
+apacpdatraw <- read.csv(here::here('../nerrs-metabolism/data-raw/cp_ebase_911.csv'))
+fortd <- apacpdatraw |> 
+  mutate(
+    DateTimeStamp = mdy_hm(DateTimeStamp, tz = 'America/Jamaica'), 
+    Depth = Depth + 0.3
+  ) |> 
+  dplyr::rename(
+    Sal = Sal_ppt ,
+    PAR = PAR_W.m2
+  ) |> 
+  arrange(DateTimeStamp) |> 
+  filter(year(DateTimeStamp) > 2019 & year(DateTimeStamp) < 2022)
 
 ## 
 # odum
 
-load(file = here('data/apacpdtd.RData'))
+load(file = here::here('data/apacpdtd.RData'))
 
 # depth at site
 depth <-  apacpdtd$Tide %>% mean()
 
-tmp <- apacpdtd %>% 
+odumin <- apacpdtd %>% 
   select(DateTimeStamp, Temp, Sal, DO_mgl = DO_obs, ATemp, BP, WSpd, Tide)
 
-opmetabfixz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+opmetabfixz <- ecometab(odumin, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
                     depth_val = NULL, depth_vec = depth, instant = T)
-opmetabvarz <- ecometab(tmp, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
-                    depth_val = NULL, depth_vec = tmp$Tide, instant = T)
+opmetabvarz <- ecometab(odumin, tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, gasex = 'Wanninkhof', gasave = 'daily', metab_units = 'mmol', 
+                    depth_val = NULL, depth_vec = odumin$Tide, instant = T)
 
 # all units to mmol O2 m-2 d-1
 opmetaball <- list(
@@ -40,21 +58,21 @@ opmetaball <- list(
   enframe() %>% 
   unnest('value') %>% 
   group_by(metab_date, name) %>% 
-  summarize(
+  dplyr::summarize(
     D = mean(D, na.rm = T), 
     P = mean(Pg, na.rm = T), 
     R = -1 * mean(Rt, na.rm = T), 
     NEM = mean(NEM, na.rm = T), 
     .groups = 'drop'
   ) %>% 
-  rename(Date = metab_date) %>% 
+  dplyr::rename(Date = metab_date) %>% 
   gather('var', 'val', -Date, -name)
 
 odum <- opmetaball %>%
   mutate(
     mo = month(Date)
   ) %>% 
-  summarise(
+  dplyr::summarise(
     medv = mean(val, na.rm = T),
     .by = c(name, mo, var)
   ) %>% 
@@ -63,31 +81,33 @@ odum <- opmetaball %>%
 ##
 # ebase results (include odum as fixed depth)
 
-load(file = here('data/apaobscmp1day.RData'))
-load(file = here('data/apaobscmp1dayvarz.RData'))
-load(file = here('data/apaobscmp7day.RData'))
-load(file = here('data/apaobscmp7dayvarz.RData'))
+load(file = here::here('data/apaobscmp1day.RData'))
+load(file = here::here('data/apaobscmp1dayvarz.RData'))
+load(file = here::here('data/apaobscmp7day.RData'))
+load(file = here::here('data/apaobscmp7dayvarz.RData'))
 
 ebse <- list(
-  '1 day, fix Z' = apaobscmp1day,
-  '1 day, var Z' = apaobscmp1dayvarz,
-  '7 day, fix Z' = apaobscmp7day,
-  '7 day, var Z' = apaobscmp7dayvarz
+    '1 day, fix Z' = apaobscmp1day,
+    '1 day, var Z' = apaobscmp1dayvarz, 
+    '7 day, fix Z' = apaobscmp7day, 
+    '7 day, var Z' = apaobscmp7dayvarz
   ) %>% 
-  enframe()  %>% 
-  unnest(value) %>% 
-  mutate(
-    mo = month(Date)
+  enframe() %>% 
+  unnest('value') %>% 
+  dplyr::mutate(
+    mo = month(Date), 
+    NEM = P - R
   ) %>% 
-  summarise(
+  dplyr::select(name, mo, D, P, R, NEM) %>% 
+  pivot_longer(c(D, P, R, NEM), names_to = 'var', values_to = 'val') %>%
+  dplyr::summarise(
     medv = mean(val, na.rm = T),
-    .by = c(name, mo, var, typ)
+    .by = c(name, mo, var)
   ) %>% 
-  separate(name, c('opt', 'depth'), sep = ', ') %>% 
-  filter(typ == 'EBASE')
+  separate(name, c('opt', 'depth'), sep = ', ')
 ```
 
-The following shows the effect of changing the optimization period and depth variable used to estimate metabolic parameters with EBASE at Cat Point Station for 2021 data.  The optimization periods were 1 or 7 days and depth was fixed as the mean or continuous as tidal height.  All results are averaged at the monthly scale. The Odum results were also evaluated depth as fixed or continuous.  All results are based on observed dissolved oxygen data.
+The following shows the effect of changing the optimization period and depth variable used to estimate metabolic parameters with EBASE at Cat Point Station for 2021 data.  The optimization periods were 1 or 7 days and depth was fixed as the mean or variable with tidal height.  All results are averaged at the monthly scale. The Odum results were also evaluated depth as fixed or variable.  All results are based on observed dissolved oxygen data.
 
 ```{r}
 #| fig-height: 6
@@ -129,3 +149,151 @@ p1 + p2 + plot_layout(ncol = 1, heights = c(1, 0.5), guides = 'collect') &
         axis.text.x = element_text(angle = 45, hjust = 1, size= 6)
         )
 ```
+
+Metabolism results for both EBASE and Odum using variable depth show an inverse relationship of P and R with season, where both are lower in the summer, which is counter-intuitive to expectations. The Odum results were not previously inversed using continuous depth, where the results herein used a slightly modified version of the `ecometab()` function from WtRegDO that converts volumetric dissolved oxygen (mmol O$_2$ m$^{-3}$) to areal dissolved oxygen (mmol O$_2$ m$^{-2}$) using the same approach as EBASE.  For both cases, areal dissolved oxygen is calculated prior to estimating any metabolic parameters by simply multiply dissolved oxygen by depth. For variable depth, this is the continuous tidal height vector.  An example of the resulting areal dissolved oxygen time series is below using fixed and variable depth. 
+
+```{r}
+ebasein <- apacpdtd %>%
+  select(DateTimeStamp, DO_obs, Temp, Sal, PAR, WSpd, Tide)
+
+fixz <- ebase_prep(ebasein, Z = depth, interval = 900, ndays = 1)
+varz <- ebase_prep(ebasein, Z = ebasein$Tide, interval = 900, ndays = 1)
+
+p1 <- plot_ly(fixz, x = ~DateTimeStamp, y = ~DO_obs, type = 'scatter', mode = 'lines', name = 'Fixed Z') |>
+  add_trace(data = varz, x = ~DateTimeStamp, y = ~DO_obs, type = 'scatter', mode = 'lines', name = 'Variable Z') %>% 
+  layout(
+    yaxis = list(title = 'DO (mmol m-2)')
+    )
+
+p2 <- plot_ly(ebasein, x = ~DateTimeStamp, y = ~DO_obs / 32 * 1000, type = 'scatter', mode = 'lines', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'DO (mmol m-3)')
+    ) 
+
+p3 <- plot_ly(ebasein, x = ~DateTimeStamp, y = ~Tide, type = 'scatter', mode = 'lines', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'Tidal height (m)')
+    )
+
+# convert zoom date range in a format recognizable by plotly
+min_Date <- ymd_hms("2021-01-20 00:00:00", tz = 'America/Jamaica')
+min_Date_ms <- interval("1970-01-01 00:00:00", min_Date, tzone = 'America/Jamaica') / dmilliseconds(1)
+max_Date <- ymd_hms("2021-02-05 00:00:00", tz = 'America/Jamaica')
+max_Date_ms <- interval("1970-01-01 00:00:00", max_Date, tzone = 'America/Jamaica') / dmilliseconds(1)
+  
+p <- subplot(p1, p2, p3, shareX = T, shareY = T, nrows = 3) %>% 
+  layout(
+    xaxis = list(range = c(min_Date_ms, max_Date_ms), title = '')
+    )
+
+p
+```
+
+It can be seen clearly converting volumetric dissolved oxygen to areal using a variable depth severely alters the time series.  This superimposes the tidal signal on dissolved oxygen and can mask any biological signal in the observed dissolved oxygen time series. Understandably, the resulting metabolic parameters from this time series will be inaccurate. 
+
+However, the lower metabolic parameters in the summer suggests the effect of multiplying dissolved oxygen by tidal height has a systematic effect on the results that varies by season.  In other words, the tidal height time series is different in the summer.  This may be explained by extracting the tidal harmonics from the tidal height time series. 
+
+```{r}
+#| out-height: '100%' 
+#| out-width: '100%'
+# tidal components to estimate
+constituents <- c('Z0', 'SA', 'O1', 'K1', 'M2', 'S2', 'M4')
+
+datsl <- as.sealevel(elevation = fortd$Depth, time = fortd$DateTimeStamp)
+mod <- tidem(t = datsl, constituents = constituents, latitude = 29.7021)
+
+
+# loop through tidal components, predict each with tidem
+preds <- sapply(constituents, function(x){
+  
+  mod <- tidem(t = datsl, constituent = x, latitude = 29.7021)
+  pred <- predict(mod)
+  pred - mean(pred)
+  
+})
+
+# combine prediction, sum, add time data
+# predall <- rowSums(preds) + mean(datsl[['elevation']])
+preds <- data.frame(time = datsl[['time']], preds) 
+
+# prep for plot
+toplo1 <- fortd |> 
+  select(DateTimeStamp, Depth) |> 
+  mutate(Estimated = predict(mod))
+
+
+p1 <- plot_ly(toplo1, x = ~DateTimeStamp, y = ~Depth, type = 'scatter', mode = 'lines', name = 'Observed') |>
+  add_trace(x = ~DateTimeStamp, y = ~Estimated, type = 'scatter', mode = 'lines', name = 'Predicted') %>% 
+  layout(
+    yaxis = list(title = 'Tidal height (m)')
+    )
+
+# prep for plot
+toplo2 <- preds
+
+p2 <- plot_ly(toplo2, x = ~time, y = ~SA, type = 'scatter', mode = 'lines', name = 'SA', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'SA (m)')
+  )
+p3 <- plot_ly(toplo2, x = ~time, y = ~O1, type = 'scatter', mode = 'lines', name = 'O1', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'O1 (m)')
+  )
+p4 <- plot_ly(toplo2, x = ~time, y = ~K1, type = 'scatter', mode = 'lines', name = 'K1', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'K1 (m)')
+  )
+p5 <- plot_ly(toplo2, x = ~time, y = ~M2, type = 'scatter', mode = 'lines', name = 'M2', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'M2 (m)')
+  )
+p6 <- plot_ly(toplo2, x = ~time, y = ~S2, type = 'scatter', mode = 'lines', name = 'S2', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'S2 (m)')
+  )
+p7 <- plot_ly(toplo2, x = ~time, y = ~M4, type = 'scatter', mode = 'lines', name = 'M4', showlegend = F, line = list(color = 'black')) %>% 
+  layout(
+    yaxis = list(title = 'M4 (m)')
+  )
+
+# convert zoom date range in a format recognizable by plotly
+min_Date <- ymd_hms("2021-01-20 00:00:00", tz = 'America/Jamaica')
+min_Date_ms <- interval("1970-01-01 00:00:00", min_Date, tzone = 'America/Jamaica') / dmilliseconds(1)
+max_Date <- ymd_hms("2021-02-05 00:00:00", tz = 'America/Jamaica')
+max_Date_ms <- interval("1970-01-01 00:00:00", max_Date, tzone = 'America/Jamaica') / dmilliseconds(1)
+  
+# plot two weeks
+p <- subplot(p1, p2, p3, p4, p5, p6, p7, shareX = T, shareY = T, nrows = 7) %>% 
+  layout(
+    xaxis = list(range = c(min_Date_ms, max_Date_ms), title = ''), 
+    height = 800
+  )
+p
+```
+
+The SA component has the largest amplitude and a frequency of once per year, with peaks in the summer and troughs in the winter. This regular periodicity may be influencing the areal dissolved oxygen estimate. However, this component is not readily visible by simply averaging the tidal height time series each month for the three years of data used above.
+
+```{r}
+#| fig-height: 4
+#| fig-width: 4
+#| fig-align: center
+moht <- fortd %>%
+  dplyr::mutate(
+    mo = month(DateTimeStamp),
+    yr = year(DateTimeStamp)
+  ) %>% 
+  dplyr::summarise(
+    ave = mean(Depth, na.rm = T),
+    .by = c('mo')
+  )
+ggplot(moht, aes(x = mo, y = ave)) + 
+  geom_point() + 
+  geom_line() + 
+  theme_minimal() + 
+  labs( 
+    x = 'Month', 
+    y = 'Mean tidal height (m)'
+  )
+```
+
+Although the exact mechanism leading to the anomalous results is not clear, it is clear that areal dissolved oxygen should not be multiplied by the variable time series for tidal height.  For EBASE, averaging depth by the optimization period would be appropriate if a variable tidal height vector is used. 

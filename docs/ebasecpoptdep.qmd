@@ -15,8 +15,8 @@ library(tidyverse)
 library(patchwork)
 library(plotly)
 library(oce)
-devtools::load_all(here::here('../WtRegDO'))
-devtools::load_all(here::here('../EBASE'))
+devtools::load_all(here::here('../WtRegDO')) # variable z branch
+devtools::load_all(here::here('../EBASE')) # must be v1.0.1
 
 ##
 # longer apa cp time series for tidal constituent est

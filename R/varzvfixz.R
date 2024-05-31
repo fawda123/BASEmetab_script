@@ -4,7 +4,7 @@ library(doParallel)
 library(here)
 library(WtRegDO)
 # library(EBASE)
-devtools::load_all('../EBASE', helpers = F)
+devtools::load_all('../EBASE', helpers = F) # use v1.0.1 to see the issues with variable depth
 library(tidyverse)
 
 source(here('R/funcs.R'))

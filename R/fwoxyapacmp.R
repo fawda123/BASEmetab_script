@@ -135,10 +135,33 @@ for(i in 1:nrow(grd)){
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
-  
+  res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+             silent = T)
+
   stopCluster(cl)
+
+  i <- 1
+  while(inherits(res, 'try-error') & i <= 5){
+    
+    cat('retrying...\t')
+    
+    cl <- makeCluster(ncores)
+    registerDoParallel(cl)
+    
+    res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+                aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+               silent = T)
+    
+    stopCluster(cl)
+    
+    i <- i + 1
+    
+  }
+  if(i > 5){
+    cat('failed...\t')
+    next()
+  }
   
   # append output to grd
   grd$out[[i]] <- list(res)
@@ -181,10 +204,33 @@ for(i in 1:nrow(grd)){
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
+  res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+                   aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+             silent = T)
   
   stopCluster(cl)
+  
+  i <- 1
+  while(inherits(res, 'try-error') & i <= 5){
+    
+    cat('retrying...\t')
+    
+    cl <- makeCluster(ncores)
+    registerDoParallel(cl)
+    
+    res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+                     aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+               silent = T)
+    
+    stopCluster(cl)
+    
+    i <- i + 1
+    
+  }
+  if(i > 5){
+    cat('failed...\t')
+    next()
+  }
   
   # append output to grd
   grd$out[[i]] <- list(res)
@@ -230,10 +276,33 @@ for(i in 1:nrow(grd)){
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, progress = FALSE, n.chains = 4, 
-               aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
+  res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+                   aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+             silent = T)
   
   stopCluster(cl)
+  
+  i <- 1
+  while(inherits(res, 'try-error') & i <= 5){
+    
+    cat('retrying...\t')
+    
+    cl <- makeCluster(ncores)
+    registerDoParallel(cl)
+    
+    res <- try(ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
+                     aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays), 
+               silent = T)
+    
+    stopCluster(cl)
+    
+    i <- i + 1
+    
+  }
+  if(i > 5){
+    cat('failed...\t')
+    next()
+  }
   
   # append output to grd
   grd$out[[i]] <- list(res)

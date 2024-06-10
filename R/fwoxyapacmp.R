@@ -141,8 +141,8 @@ for(i in 1:nrow(grd)){
 
   stopCluster(cl)
 
-  i <- 1
-  while(inherits(res, 'try-error') & i <= 5){
+  ind <- 1
+  while(inherits(res, 'try-error') & ind <= 5){
     
     cat('retrying...\t')
     
@@ -155,10 +155,10 @@ for(i in 1:nrow(grd)){
     
     stopCluster(cl)
     
-    i <- i + 1
+    ind <- ind + 1
     
   }
-  if(i > 5){
+  if(ind > 5){
     cat('failed...\t')
     next()
   }
@@ -210,8 +210,8 @@ for(i in 1:nrow(grd)){
   
   stopCluster(cl)
   
-  i <- 1
-  while(inherits(res, 'try-error') & i <= 5){
+  ind <- 1
+  while(inherits(res, 'try-error') & ind <= 5){
     
     cat('retrying...\t')
     
@@ -224,10 +224,10 @@ for(i in 1:nrow(grd)){
     
     stopCluster(cl)
     
-    i <- i + 1
+    ind <- ind + 1
     
   }
-  if(i > 5){
+  if(ind > 5){
     cat('failed...\t')
     next()
   }
@@ -282,8 +282,8 @@ for(i in 1:nrow(grd)){
   
   stopCluster(cl)
   
-  i <- 1
-  while(inherits(res, 'try-error') & i <= 5){
+  ind <- 1
+  while(inherits(res, 'try-error') & ind <= 5){
     
     cat('retrying...\t')
     
@@ -296,10 +296,10 @@ for(i in 1:nrow(grd)){
     
     stopCluster(cl)
     
-    i <- i + 1
+    ind <- ind + 1
     
   }
-  if(i > 5){
+  if(ind > 5){
     cat('failed...\t')
     next()
   }

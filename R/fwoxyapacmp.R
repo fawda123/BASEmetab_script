@@ -54,7 +54,7 @@ fwdatinp <- fwdat %>%
 cl <- makeCluster(6)
 registerDoParallel(cl)
   
-res7 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+res7 <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
              ndays = 7)
   
 stopCluster(cl)
@@ -63,7 +63,7 @@ stopCluster(cl)
 cl <- makeCluster(6)
 registerDoParallel(cl)
 
-res30 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+res30 <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
               ndays = 30)
 
 stopCluster(cl)
@@ -81,7 +81,7 @@ save(apadef, file = 'data/apadef.RData', compress = 'xz')
 cl <- makeCluster(6)
 registerDoParallel(cl)
 
-res7 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+res7 <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
               ndays = 7, bprior = c(0.251, 1e-6))
 
 stopCluster(cl)
@@ -90,7 +90,7 @@ stopCluster(cl)
 cl <- makeCluster(6)
 registerDoParallel(cl)
 
-res30 <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+res30 <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
                ndays = 30, bprior = c(0.251, 1e-6))
 
 stopCluster(cl)
@@ -130,11 +130,12 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(6)
+  ncores <- detectCores() - 2
+  cl <- makeCluster(ncores)
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
                aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
@@ -175,11 +176,12 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(6)
+  ncores <- detectCores() - 2
+  cl <- makeCluster(ncores)
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = TRUE, n.chains = 4, 
+  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, n.chains = 4, 
                aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
@@ -223,11 +225,12 @@ for(i in 1:nrow(grd)){
   ndays <- c(selrow$ndays)
   
   # run model for inputs
-  cl <- makeCluster(6)
+  ncores <- detectCores() - 2
+  cl <- makeCluster(ncores)
   registerDoParallel(cl)
   
   # use interp for missing values
-  res <- ebase(fwdatinp, interval = 900, H = fwdatinp$H, progress = FALSE, n.chains = 4, 
+  res <- ebase(fwdatinp, interval = 900, Z = fwdatinp$H, progress = FALSE, n.chains = 4, 
                aprior = aprior, rprior = rprior, bprior = c(0.251, 1e-6), ndays = ndays)
   
   stopCluster(cl)
@@ -333,7 +336,7 @@ apacp <- comb(apacpwq, apaebmet) %>%
   ) %>%
   filter(!is.na(Tide) | !is.na(DO_obs))
 
-apacpdtd <- wtreg(apacp, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.7021, long = -84.8802, progress = T)
+apacpdtd <- wtreg(apacp, wins = list(12, 12, 0.4), tz = 'America/Jamaica', lat = 29.7021, long = -84.8802)
 
 save(apacpdtd, file = here('data/apacpdtd.RData'))
 
@@ -364,7 +367,7 @@ cl <- makeCluster(10)
 registerDoParallel(cl)
 
 # use interp for missing values
-resnos <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
+resnos <- ebase(tomod, interval = 900, Z = tomod$H, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
 
 # save ebase results for noisy ts
 save(resnos, file = here('data/resnos.RData'))
@@ -377,7 +380,7 @@ cl <- makeCluster(10)
 registerDoParallel(cl)
 
 # use interp for missing values
-resobs <- ebase(tomod, interval = 900, H = tomod$H, progress = TRUE, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
+resobs <- ebase(tomod, interval = 900, Z = tomod$H, bprior = c(0.251, 1e-6), n.chains = 4, ndays = 7)
 
 # save ebase results for observed (synthetic) ts
 save(resobs, file = here('data/resobs.RData'))

@@ -336,6 +336,9 @@ apasumdat <- apagrd %>%
       if(!ind %in% 1:16)
         out <- out[[1]] %>% 
           filter(grp != max(grp))
+      else 
+        out <- out[[1]]
+      names(out)[names(out) == 'Z'] <- 'H'
       
       cmp <- inner_join(fwdatcmp, out, by = c('Date', 'DateTimeStamp')) %>%
         select(-H, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%

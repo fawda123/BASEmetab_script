@@ -338,7 +338,7 @@ apasumdat <- apagrd %>%
           filter(grp != max(grp))
       else 
         out <- out[[1]]
-      
+
       cmp <- inner_join(fwdatcmp, out, by = c('Date', 'DateTimeStamp')) %>%
         select(-Z, -converge, -dDO, -DO_obs.y, -rsq, -matches('lo$|hi$')) %>%
         rename(
